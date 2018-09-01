@@ -6,6 +6,7 @@ import java.util.Map;
 
 import org.com.ramboindustries.corp.sql.WhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SqlTable;
+import org.com.ramboindustries.corp.sql.exceptions.SqlTableException;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 public class SqlUtils {
@@ -43,12 +44,13 @@ public class SqlUtils {
 	 * and create a dynamic script
 	 * @param object the instance
 	 * @return SQL script
-	 * @throws IllegalAccessException
+	 * @throws IllegalAccessException, SqlTableException
 	 */
-	public static <E> String createInsertScript(E object) throws IllegalAccessException {
+	public static <E> String createInsertScript(E object) throws IllegalAccessException, SqlTableException {
+		if (!object.getClass().isAnnotationPresent(SqlTable.class))
+			throw new SqlTableException(object.getClass());
 		String tableName = object.getClass().getAnnotation(SqlTable.class).table();
 		return createInsertScript(tableName, object);
-		
 	}
 
 	
