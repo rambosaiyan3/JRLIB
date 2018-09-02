@@ -5,14 +5,14 @@ import java.beans.IntrospectionException;
 import java.beans.PropertyDescriptor;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
-import javax.crypto.interfaces.PBEKey;
-
+import org.com.ramboindustries.corp.sql.SqlJavaField;
 import org.com.ramboindustries.corp.sql.annotations.SqlColumn;
 import org.com.ramboindustries.corp.sql.annotations.SqlIgnore;
 
@@ -68,41 +68,57 @@ public class ObjectAccessUtils {
 			classes.remove(classes.size() - 1);
 		return classes;
 	}
-	
-	public static List<Method> getSettersMethodsFromClass(Class<?> clazz) {
-		Method [] methods = clazz.getDeclaredMethods();
-		List<Method> setters = new ArrayList<>();
-		for(Method x : methods) {
-			if(x.getName().startsWith("set") && x.getParameterCount() == 1) {
-				setters.add(x);
-			}
-		}
-		return setters;
-	}
-	
-	private static <E> void callSetter(E object, String setterName, Object value)
+		
+	public static <E> void callSetter(E object, String setterName, Object value)
 			throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
 		PropertyDescriptor propertyDescriptor = new PropertyDescriptor(setterName, object.getClass());
 		propertyDescriptor.getWriteMethod().invoke(object, value);
 	}
 	
-	public static <E> List<JRFieldValue> getFieldValue(E object)
-			throws IllegalArgumentException, IllegalAccessException {
-		List<JRFieldValue> jrFieldValue = new ArrayList<>();
+	public static <E> Object callGetter(String name, E object)
+			throws IntrospectionException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+		PropertyDescriptor propertyDescriptor = new PropertyDescriptor(name, object.getClass());
+		return propertyDescriptor.getReadMethod().invoke(object);
+	}
+	
+	private static <E> SqlJavaField createSqlJavaField(Field field, E object)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		SqlJavaField sqlJavaField = new SqlJavaField();
+		field.setAccessible(true);
+		sqlJavaField.setAttributeName(field.getName());
+		sqlJavaField.setSqlColumn(field.getName());
+		if (field.isAnnotationPresent(SqlColumn.class)) {
+			sqlJavaField.setSqlColumn(field.getAnnotation(SqlColumn.class).name());
+		}
+		sqlJavaField.setValue(callGetter(field.getName(), object));
+		field.setAccessible(false);
+		return sqlJavaField;
+	}
+	
+	public static <E> Set<SqlJavaField> getAllFieldFromClassAndSuperClass(E object, boolean getObjectClass)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		List<Class<?>> classes = getSuperclassesFromClass(object.getClass(), getObjectClass);
+		Set<SqlJavaField> allFields = new HashSet<>();
+		if (classes != null && !classes.isEmpty()) {
+			for (int i = classes.size() -1; i >= 0; i--) {
+				Field fields[] = classes.get(i).getDeclaredFields();
+				for (Field field : fields) {
+					if (!field.isAnnotationPresent(SqlIgnore.class)) {
+						allFields.add(createSqlJavaField(field, object));
+					}
+				}
+			}
+		}
 		Field[] fields = object.getClass().getDeclaredFields();
 		for (Field field : fields) {
 			if (!field.isAnnotationPresent(SqlIgnore.class)) {
-				field.setAccessible(true);
-				if (field.isAnnotationPresent(SqlColumn.class))
-					jrFieldValue.add(new JRFieldValue(field.getAnnotation(SqlColumn.class).name(), field.get(object)));
-				else
-					jrFieldValue.add(new JRFieldValue(field.getName(), field.get(object)));
-				field.setAccessible(false);
+				allFields.add(createSqlJavaField(field, object));
 			}
 		}
-		return jrFieldValue;
+		return allFields;
 	}
-
+	
+	
 }
 
 

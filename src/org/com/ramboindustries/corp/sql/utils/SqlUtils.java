@@ -1,15 +1,17 @@
 package org.com.ramboindustries.corp.sql.utils;
 
-import java.util.ArrayList;
+import java.beans.IntrospectionException;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SqlColumnValue;
+import org.com.ramboindustries.corp.sql.SqlJavaField;
 import org.com.ramboindustries.corp.sql.WhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SqlTable;
 import org.com.ramboindustries.corp.sql.exceptions.SqlTableException;
-import org.com.ramboindustries.corp.utils.JRFieldValue;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 public class SqlUtils {
@@ -24,7 +26,7 @@ public class SqlUtils {
 	 * @return
 	 * @throws IllegalAccessException
 	 */
-	public static <E> String createInsertScript(String tableName, E object) throws IllegalAccessException {
+	public <E> String createInsertScript(String tableName, E object) throws IllegalAccessException {
 		StringBuilder sqlFields = new StringBuilder();
 		StringBuilder sqlValues = new StringBuilder();
 		String sql = null;
@@ -46,11 +48,12 @@ public class SqlUtils {
 	/**
 	 * If you used the SqlTable annotation, we will get the name that you choose and
 	 * create a dynamic script
+	 * 
 	 * @param object the instance
 	 * @return SQL script
 	 * @throws IllegalAccessException, SqlTableException
 	 */
-	public static <E> String createInsertScript(E object) throws IllegalAccessException, SqlTableException {
+	public <E> String createInsertScript(E object) throws IllegalAccessException, SqlTableException {
 		if (!object.getClass().isAnnotationPresent(SqlTable.class))
 			throw new SqlTableException(object.getClass());
 		String tableName = object.getClass().getAnnotation(SqlTable.class).table();
@@ -60,12 +63,12 @@ public class SqlUtils {
 	/**
 	 * @author kernelpanic_r
 	 * @param tableName name of the entity
-	 * @param object instance
-	 * @param where conditions
+	 * @param object    instance
+	 * @param where     conditions
 	 * @return a SQL script
 	 * @throws IllegalAccessException
 	 */
-	public static <E> String createUpdateScript(String tableName, E object, List<WhereCondition> where)
+	public <E> String createUpdateScript(String tableName, E object, List<WhereCondition> where)
 			throws IllegalAccessException {
 		StringBuilder script = new StringBuilder(" SET");
 		String sql = null;
@@ -81,15 +84,16 @@ public class SqlUtils {
 		sql = " UPDATE " + tableName + script.toString();
 		return sql;
 	}
-	
-	public static <E> String createUpdateScript(E object, List<WhereCondition> where) throws IllegalAccessException, SqlTableException  {
-		if(!object.getClass().isAnnotationPresent(SqlTable.class))
+
+	public <E> String createUpdateScript(E object, List<WhereCondition> where)
+			throws IllegalAccessException, SqlTableException {
+		if (!object.getClass().isAnnotationPresent(SqlTable.class))
 			throw new SqlTableException(object.getClass());
 		String tableName = object.getClass().getAnnotation(SqlTable.class).table();
-		return  createUpdateScript(tableName, object, where);
+		return createUpdateScript(tableName, object, where);
 	}
 
-	public static String createSelectScript(String tableName, String[] fieldsName, List<WhereCondition> where) {
+	public String createSelectScript(String tableName, String[] fieldsName, List<WhereCondition> where) {
 		char alias = tableName.toUpperCase().charAt(0);
 		StringBuilder sql = new StringBuilder(" SELECT ");
 		for (String field : fieldsName) {
@@ -106,53 +110,36 @@ public class SqlUtils {
 		});
 		return sql.toString();
 	}
-	
-	private static <E> SqlColumnValue getFieldsNames(E object) throws IllegalArgumentException, IllegalAccessException {
+
+	private SqlColumnValue insertScript(Set<SqlJavaField> sqlJavaField) {
 		SqlColumnValue sqlColumnValue = new SqlColumnValue();
 		StringBuilder fields = new StringBuilder();
 		StringBuilder values = new StringBuilder();
-		List<JRFieldValue> jrFieldValue = ObjectAccessUtils.getFieldValue(object);
-		jrFieldValue.forEach(x -> {
-			fields.append(" " + x.getFieldName() + ", ");
-			if (x.getFieldValue() instanceof String || x.getFieldValue() instanceof Date) {
-				values.append(" '" + x.getFieldValue() + "', ");
-			} else {
-				values.append(" " + x.getFieldValue() + ", ");
-			}
+		sqlJavaField.forEach(sql -> {
+			fields.append(" " + sql.getSqlColumn() + ",");
+			if (sql.getValue() instanceof String || sql.getValue() instanceof java.util.Date)
+				values.append(" '" + sql.getValue() + "',");
+			else
+				values.append(" " + sql.getValue() + ",");
 		});
-		sqlColumnValue.setColumns(fields.delete(fields.length() - 1, fields.length()).toString());
-		sqlColumnValue.setValues(values.delete(values.length() - 1, values.length()).toString());
+		sqlColumnValue.setColumns(fields.toString());
+		sqlColumnValue.setValues(values.toString());
 		return sqlColumnValue;
 	}
-	
-	public static <E> String teste(E object) throws IllegalArgumentException, IllegalAccessException {
-		List<Class<?>> classes = ObjectAccessUtils.getSuperclassesFromClass(object.getClass(), false);
-		String sql = null;
-		if(classes != null && !classes.isEmpty()) {
-			List<SqlColumnValue> sqlColumns = new ArrayList<>();
-			for(Class<?> clazz : classes) {
-				sqlColumns.add(getFieldsNames(clazz.cast(object)));
-			}
-		}else {
-			
-		}
+
+	private <E> String getTableName(E object) {
+		if (object.getClass().isAnnotationPresent(SqlTable.class))
+			return object.getClass().getAnnotation(SqlTable.class).table();
+		else
+			return object.getClass().getSimpleName();
+	}
+
+	public <E> String createInsertScriptSQL(E object)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		Set<SqlJavaField> sqlJavaField = ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false);
+		SqlColumnValue sqlColumnValues = insertScript(sqlJavaField);
+		String sql = " INSERT INTO " + getTableName(object) + " (" + sqlColumnValues.getColumns() + " ) VALUES ("
+				+ sqlColumnValues.getValues() + " )";
 		return sql;
 	}
-	
-	
-	
-	public static void main(String[] args) throws Exception{
-		System.out.println(teste(new He()));
-	}
-	
-	
-}
-
-
-class Te {
-	private String e;
-}
-
-class He extends Te {
-	private int a;
 }

@@ -1,5 +1,10 @@
 package org.com.ramboindustries.corp.sql;
 
+/**
+ * Use this to create the SQL script
+ * @author kernelpanic_r
+ *
+ */
 public class SqlColumnValue {
 
 	private String columns;
@@ -21,7 +26,7 @@ public class SqlColumnValue {
 	}
 
 	public void setColumns(String columns) {
-		this.columns = columns;
+		this.columns = columns.substring(0, columns.length() - 1);
 	}
 
 	public String getValues() {
@@ -29,7 +34,7 @@ public class SqlColumnValue {
 	}
 
 	public void setValues(String values) {
-		this.values = values;
+		this.values = values.substring(0, values.length() - 1);
 	}
 
 }
