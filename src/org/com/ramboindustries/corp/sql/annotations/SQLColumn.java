@@ -6,12 +6,15 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.TYPE_USE })
-public @interface SqlTable {
+@Target({ ElementType.FIELD })
+public @interface SQLColumn {
 
 	/**
-	 * you will use this at the top of your class
+	 * We can use this annotation on a field that we want to map, and then, we can
+	 * create the automatic SQL script
+	 * 
+	 * @return
 	 */
-	public String table();
+	public String name();
 
 }

@@ -12,9 +12,9 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.com.ramboindustries.corp.sql.SqlJavaField;
-import org.com.ramboindustries.corp.sql.annotations.SqlColumn;
-import org.com.ramboindustries.corp.sql.annotations.SqlIgnore;
+import org.com.ramboindustries.corp.sql.SQLJavaField;
+import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
+import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 
 /**
  * @author kernelpanic_r
@@ -36,9 +36,9 @@ public class ObjectAccessUtils {
 		Field[] objectFields = object.getClass().getDeclaredFields();
 		for (Field field : objectFields) {
 			field.setAccessible(true);
-			if (!field.isAnnotationPresent(SqlIgnore.class)) {
-				if (field.isAnnotationPresent(SqlColumn.class)) {
-					keyValue.put(field.getDeclaredAnnotation(SqlColumn.class).name(), field.get(object));
+			if (!field.isAnnotationPresent(SQLIgnore.class)) {
+				if (field.isAnnotationPresent(SQLColumn.class)) {
+					keyValue.put(field.getDeclaredAnnotation(SQLColumn.class).name(), field.get(object));
 				} else {
 					keyValue.put(field.getName(), field.get(object));
 				}
@@ -81,29 +81,28 @@ public class ObjectAccessUtils {
 		return propertyDescriptor.getReadMethod().invoke(object);
 	}
 	
-	private static <E> SqlJavaField createSqlJavaField(Field field, E object)
+	private static <E> SQLJavaField createSqlJavaField(Field field, E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		SqlJavaField sqlJavaField = new SqlJavaField();
+		SQLJavaField sqlJavaField = new SQLJavaField();
 		field.setAccessible(true);
-		sqlJavaField.setAttributeName(field.getName());
 		sqlJavaField.setSqlColumn(field.getName());
-		if (field.isAnnotationPresent(SqlColumn.class)) {
-			sqlJavaField.setSqlColumn(field.getAnnotation(SqlColumn.class).name());
+		if (field.isAnnotationPresent(SQLColumn.class)) {
+			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
 		}
 		sqlJavaField.setValue(callGetter(field.getName(), object));
 		field.setAccessible(false);
 		return sqlJavaField;
 	}
 	
-	public static <E> Set<SqlJavaField> getAllFieldFromClassAndSuperClass(E object, boolean getObjectClass)
+	public static <E> Set<SQLJavaField> getAllFieldFromClassAndSuperClass(E object, boolean getObjectClass)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		List<Class<?>> classes = getSuperclassesFromClass(object.getClass(), getObjectClass);
-		Set<SqlJavaField> allFields = new HashSet<>();
+		Set<SQLJavaField> allFields = new HashSet<>();
 		if (classes != null && !classes.isEmpty()) {
 			for (int i = classes.size() -1; i >= 0; i--) {
 				Field fields[] = classes.get(i).getDeclaredFields();
 				for (Field field : fields) {
-					if (!field.isAnnotationPresent(SqlIgnore.class)) {
+					if (!field.isAnnotationPresent(SQLIgnore.class)) {
 						allFields.add(createSqlJavaField(field, object));
 					}
 				}
@@ -111,7 +110,7 @@ public class ObjectAccessUtils {
 		}
 		Field[] fields = object.getClass().getDeclaredFields();
 		for (Field field : fields) {
-			if (!field.isAnnotationPresent(SqlIgnore.class)) {
+			if (!field.isAnnotationPresent(SQLIgnore.class)) {
 				allFields.add(createSqlJavaField(field, object));
 			}
 		}

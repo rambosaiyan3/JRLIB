@@ -1,15 +1,20 @@
 package org.com.ramboindustries.corp.sql;
 
-public class WhereCondition {
+public class SQLWhereCondition {
+
 	private String fieldName;
 	private Object fieldValue;
-	private ConditionType conditionType;
+	private SQLConditionType conditionType;
 
-	public WhereCondition(String fieldName, Object fieldValue, ConditionType conditionType) {
+	public SQLWhereCondition(String fieldName, Object fieldValue, SQLConditionType conditionType) {
 		super();
 		this.fieldName = fieldName;
 		this.fieldValue = fieldValue;
 		this.conditionType = conditionType;
+	}
+
+	public SQLWhereCondition() {
+
 	}
 
 	public String getFieldName() {
@@ -28,14 +33,12 @@ public class WhereCondition {
 		this.fieldValue = fieldValue;
 	}
 
-	public ConditionType getConditionType() {
+	public SQLConditionType getConditionType() {
 		return conditionType;
 	}
 
-	public void setConditionType(ConditionType conditionType) {
+	public void setConditionType(SQLConditionType conditionType) {
 		this.conditionType = conditionType;
 	}
 
-
-	
 }

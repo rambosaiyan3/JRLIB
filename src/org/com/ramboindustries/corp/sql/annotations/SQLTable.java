@@ -6,11 +6,12 @@ import java.lang.annotation.RetentionPolicy;
 import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
-@Target({ ElementType.FIELD })
-public @interface SqlIgnore {
+@Target({ ElementType.TYPE_USE })
+public @interface SQLTable {
 
 	/**
-	 * Use this to ignore List, Set and whatever you want
+	 * you will use this at the top of your class
 	 */
+	public String table();
 
 }

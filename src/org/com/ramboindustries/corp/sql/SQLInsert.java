@@ -5,18 +5,18 @@ package org.com.ramboindustries.corp.sql;
  * @author kernelpanic_r
  *
  */
-public class SqlColumnValue {
+public class SQLInsert {
 
 	private String columns;
 	private String values;
 
-	public SqlColumnValue(String columns, String values) {
+	public SQLInsert(String columns, String values) {
 		super();
 		this.columns = columns;
 		this.values = values;
 	}
 
-	public SqlColumnValue() {
+	public SQLInsert() {
 		super();
 		// TODO Auto-generated constructor stub
 	}

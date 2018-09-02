@@ -1,29 +1,19 @@
 package org.com.ramboindustries.corp.sql;
 
-public class SqlJavaField {
+public class SQLJavaField {
 
-	private String attributeName;
 	private String sqlColumn;
 	private Object value;
 
-	public SqlJavaField(String attributeName, String sqlColumn, Object value) {
+	public SQLJavaField(String sqlColumn, Object value) {
 		super();
-		this.attributeName = attributeName;
 		this.sqlColumn = sqlColumn;
 		this.value = value;
 	}
 
-	public SqlJavaField() {
+	public SQLJavaField() {
 		super();
 		// TODO Auto-generated constructor stub
-	}
-
-	public String getAttributeName() {
-		return attributeName;
-	}
-
-	public void setAttributeName(String attributeName) {
-		this.attributeName = attributeName;
 	}
 
 	public String getSqlColumn() {

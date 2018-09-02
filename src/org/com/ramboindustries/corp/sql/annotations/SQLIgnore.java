@@ -7,14 +7,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD })
-public @interface SqlColumn {
+public @interface SQLIgnore {
 
 	/**
-	 * We can use this annotation on a field that we want to map, and then, we can
-	 * create the automatic SQL script
-	 * 
-	 * @return
+	 * Use this to ignore List, Set and whatever you want
 	 */
-	public String name();
 
 }
