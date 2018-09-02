@@ -87,5 +87,20 @@ public class SqlUtils {
 		});
 		return sql.toString();		
 	}
+
+	public static void main(String[] args) throws Exception {
+		e ee = new e();
+		System.out.println(createInsertScript("da", ee));
+	}
 	
+}
+
+
+
+class a {
+	int a1;
+}
+
+class e {
+	int ddd;
 }

@@ -1,0 +1,9 @@
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SqlIgnore.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SqlColumn.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SqlTable.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/utils/ObjectAccessUtils.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/exceptions/SqlColumnException.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/exceptions/SqlTableException.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/ConditionType.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/WhereCondition.java
+/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/utils/SqlUtils.java

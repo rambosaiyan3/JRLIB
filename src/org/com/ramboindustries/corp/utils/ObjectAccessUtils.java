@@ -2,7 +2,9 @@ package org.com.ramboindustries.corp.utils;
 
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 import org.com.ramboindustries.corp.sql.annotations.SqlColumn;
@@ -36,4 +38,27 @@ public class ObjectAccessUtils {
 		return keyValue;
 	}
 	
+	public static <E> List<Class<?>> getSuperclassesFromClass(E object, boolean getObjectClass){
+		List<Class<?>> classes = new ArrayList<>();
+		if(object.getClass().getSimpleName().equals(Object.class.getSimpleName()))return classes;
+		classes.add(object.getClass().getSuperclass());
+		if(classes.get(0) != null) {
+			int i = 0;
+			while(true) {
+				if(classes.get(i) != null) {
+				classes.add(classes.get(i).getSuperclass());
+					i++;
+				}else {
+					classes.remove(i);
+					break;
+				}
+			}
+		}
+		if(!getObjectClass)classes.remove(classes.size() - 1);
+		return classes;
+	}
 }
+
+
+
+
