@@ -7,15 +7,10 @@ import java.lang.annotation.Target;
 
 @Retention(RetentionPolicy.RUNTIME)
 @Target({ ElementType.FIELD })
-public @interface SQLColumn {
+public @interface SQLForeignKey {
 
-	/**
-	 * We can use this annotation on a field that we want to map, and then, we can
-	 * create the automatic SQL script
-	 * 
-	 * @return
-	 */
+	public Class<?> classReferenced();
 	public String name();
-	public int length() default 4;
-	public boolean required () default false;
+	public boolean required() default false;
+	
 }

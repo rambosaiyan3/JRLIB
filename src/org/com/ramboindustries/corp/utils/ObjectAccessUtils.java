@@ -14,7 +14,9 @@ import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
+import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
+import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 
 /**
  * @author kernelpanic_r
@@ -29,20 +31,34 @@ public class ObjectAccessUtils {
 	 * @author kernelpanic_r
 	 * @throws IllegalAccessException
 	 * @throws SecurityException
+	 * @throws SQLIdentifierException 
 	 */
 	public static <E> Map<String, Object> getFieldsValuesFromSQLEntity(E object)
-			throws IllegalAccessException, SecurityException {
+			throws IllegalAccessException, SecurityException, SQLIdentifierException {
 		Map<String, Object> keyValue = new HashMap<>();
 		Field[] objectFields = object.getClass().getDeclaredFields();
+		byte identifier = 0;
+		
 		for (Field field : objectFields) {
 			field.setAccessible(true);
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {
-				if (field.isAnnotationPresent(SQLColumn.class)) {
+				if(field.isAnnotationPresent(SQLIdentifier.class)) {
+					keyValue.put(field.getDeclaredAnnotation(SQLIdentifier.class).identifierName(), field.get(object));
+					++identifier;
+				}
+				else if (field.isAnnotationPresent(SQLColumn.class)) {
 					keyValue.put(field.getDeclaredAnnotation(SQLColumn.class).name(), field.get(object));
 				} else {
 					keyValue.put(field.getName(), field.get(object));
 				}
+				field.setAccessible(false);
+				if(identifier > 1) {
+					throw new SQLIdentifierException();
+				}
 			}
+		}
+		if(identifier == 0) {
+			throw new SQLIdentifierException("The " + object.getClass().getSimpleName() + " does not have a identifier!");
 		}
 		return keyValue;
 	}

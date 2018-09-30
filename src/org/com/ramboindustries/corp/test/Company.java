@@ -1,26 +1,17 @@
 package org.com.ramboindustries.corp.test;
 
-import java.util.List;
-
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
-import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
+import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 
 @SQLTable(table = "TB_COMPANY")
 public class Company {
 
-	@SQLColumn(name = "id_company")
+	@SQLIdentifier(identifierName = "COMPANY_ID")
 	private Long id;
-	private String name;
-	@SQLIgnore
-	private List<Employer> employers;
 
-	public Company(Long id, String name, List<Employer> employers) {
-		super();
-		this.id = id;
-		this.name = name;
-		this.employers = employers;
-	}
+	@SQLColumn(name = "NAME", length = 120, required = true)
+	private String name;
 
 	public Long getId() {
 		return id;
@@ -36,14 +27,6 @@ public class Company {
 
 	public void setName(String name) {
 		this.name = name;
-	}
-
-	public List<Employer> getEmployers() {
-		return employers;
-	}
-
-	public void setEmployers(List<Employer> employers) {
-		this.employers = employers;
 	}
 
 }

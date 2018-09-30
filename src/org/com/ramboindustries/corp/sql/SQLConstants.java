@@ -13,6 +13,9 @@ public final class SQLConstants {
 	public static final String VALUES = " VALUES ";
 	public static final String EQUAL = " = ";
 	public static final String AND = " AND ";
+	public static final String CREATE_TABLE = " CREATE TABLE ";
+	public static final String AUTO_INCREMENT = " AUTO_INCREMENT ";
+	public static final String NOT_NULL = " NOT NULL ";
 
 	public static final String updateSQL(String table, String updateScript, String whereConditions) {
 		return UPDATE + table + SET + updateScript + whereConditions;
