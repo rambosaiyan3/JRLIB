@@ -1,11 +1,14 @@
 package org.com.ramboindustries.corp.sql;
 
+import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Date;
 
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
+import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 public class SQLClassHelper {
 
@@ -55,9 +58,13 @@ public class SQLClassHelper {
 		}
 		return null;
 	}
-
-	public static void main(String[] args) throws NoSuchFieldException, SecurityException {
-
+	
+	@SuppressWarnings("unchecked")
+	public static <E, V> V getPrimaryKeyValue(E object)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		Field field = getPrimaryKey(object.getClass());
+		Class<V> clazz = (Class<V>) field.getType();
+		return ObjectAccessUtils.<E, V>callGetter(field.getName(), object, clazz);
 	}
 
 }

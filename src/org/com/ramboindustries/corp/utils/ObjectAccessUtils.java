@@ -97,6 +97,23 @@ public class ObjectAccessUtils {
 		return propertyDescriptor.getReadMethod().invoke(object);
 	}
 	
+	
+	public static <E, V> V callGetter(String name, E object, Class<V> clazz)
+			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		Object value = callGetter(name, object);
+		if (value == null)
+			return null;
+		if (clazz.isAssignableFrom(Long.class)) {
+			return clazz.cast(new Long(value.toString()));
+		} else if (clazz.isAssignableFrom(Integer.class)) {
+			return clazz.cast(new Integer(value.toString()));
+		} else if (clazz.isAssignableFrom(Short.class)) {
+			return clazz.cast(new Short(value.toString()));
+		} else {
+			return null;
+		}
+	}
+	
 	private static <E> SQLJavaField createSqlJavaField(Field field, E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		SQLJavaField sqlJavaField = new SQLJavaField();
@@ -104,8 +121,10 @@ public class ObjectAccessUtils {
 		sqlJavaField.setSqlColumn(field.getName());
 		if (field.isAnnotationPresent(SQLColumn.class)) {
 			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
+		} else if(field.isAnnotationPresent(SQLIdentifier.class)){
+			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
 		}
-		sqlJavaField.setValue(callGetter(field.getName(), object));
+		sqlJavaField.setValue(ObjectAccessUtils.<E>callGetter(field.getName(), object));
 		field.setAccessible(false);
 		return sqlJavaField;
 	}
@@ -119,7 +138,7 @@ public class ObjectAccessUtils {
 				Field fields[] = classes.get(i).getDeclaredFields();
 				for (Field field : fields) {
 					if (!field.isAnnotationPresent(SQLIgnore.class)) {
-						allFields.add(createSqlJavaField(field, object));
+						allFields.add(ObjectAccessUtils.<E>createSqlJavaField(field, object));
 					}
 				}
 			}
@@ -127,11 +146,12 @@ public class ObjectAccessUtils {
 		Field[] fields = object.getClass().getDeclaredFields();
 		for (Field field : fields) {
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {
-				allFields.add(createSqlJavaField(field, object));
+				allFields.add(ObjectAccessUtils.<E>createSqlJavaField(field, object));
 			}
 		}
 		return allFields;
 	}
+	
 	
 	
 }

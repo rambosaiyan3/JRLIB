@@ -94,7 +94,7 @@ public final class SQLUtils {
 
 	public <E> String createInsertScriptSQL(E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Set<SQLJavaField> sqlJavaField = ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false);
+		Set<SQLJavaField> sqlJavaField = ObjectAccessUtils.<E>getAllFieldFromClassAndSuperClass(object, false);
 		SQLInsert sqlColumnValues = makeInsertScript(sqlJavaField);
 		return SQLConstants.insertSQL(getTableName(object), sqlColumnValues.getColumns(), sqlColumnValues.getValues());
 	}
@@ -102,7 +102,7 @@ public final class SQLUtils {
 	public <E> String createUpdateScriptSQL(E object, List<SQLWhereCondition> whereConditions)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		String sql = null;
-		Set<SQLJavaField> sqlJavaFields = ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false);
+		Set<SQLJavaField> sqlJavaFields = ObjectAccessUtils.<E>getAllFieldFromClassAndSuperClass(object, false);
 		SQLUpdate sqlUpdate = makeUpdateScript(sqlJavaFields, whereConditions);
 		sql = SQLConstants.UPDATE + getTableName(object) + SQLConstants.SET + sqlUpdate.getUpdateScript()
 				+ sqlUpdate.getWhereCondition();
@@ -148,15 +148,7 @@ public final class SQLUtils {
 	}
 
 	private String createPrimaryKeyConstraint(String constraint, Field field) {
-		String name = null;
-		if (field.isAnnotationPresent(SQLIdentifier.class))
-			name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		else if (field.isAnnotationPresent(SQLColumn.class))
-			name = field.getAnnotation(SQLColumn.class).name();
-		else if (field.isAnnotationPresent(SQLForeignKey.class))
-			name = field.getAnnotation(SQLForeignKey.class).name();
-		else
-			name = field.getName();
+		String name = field.getAnnotation(SQLIdentifier.class).identifierName();
 		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
 	}
 
@@ -185,7 +177,10 @@ public final class SQLUtils {
 				sql.append(", ");
 			}
 
-			if (id > 1) {
+			
+			if (id == 0) {
+				throw new SQLIdentifierException("The class " + clazz.getSimpleName() + " does not have an Identifier annotation!" );
+			}else if (id > 1) {
 				throw new SQLIdentifierException();
 			}
 		}
