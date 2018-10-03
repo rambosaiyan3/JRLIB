@@ -8,6 +8,8 @@ import java.util.Date;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
+import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
+import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 public class SQLClassHelper {
@@ -15,21 +17,22 @@ public class SQLClassHelper {
 	public static String attributeToSQLColumn(Field field) {
 
 		// return the type, ie INT, VARCHAR, etc..
-		SQLType type = SQLType.getSqlType(field.getType());
+		SQLMySqlType type = SQLMySqlType.getSqlType(field.getType());
 
 		if (field.isAnnotationPresent(SQLColumn.class)) {
 			SQLColumn column = field.getAnnotation(SQLColumn.class);
 
 			if (field.getType() != Boolean.class && field.getType() != Date.class) {
-				return column.name() + type.getSqlType() + "(" + column.length() + ")"
+				String sqltype = type.getSqlType().substring(0, type.getSqlType().length() - 1) ;
+				return column.name() + " " + sqltype + "(" + column.length() + ") "
 						+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
 			}
 
-			return column.name() + type.getSqlType() + (column.required() ? SQLDataDefinition.NOT_NULL : " ");
+			return column.name() + " " + type.getSqlType() + (column.required() ? SQLDataDefinition.NOT_NULL : "");
 
 		} else if (field.isAnnotationPresent(SQLIdentifier.class)) {
 
-			return field.getAnnotation(SQLIdentifier.class).identifierName() + type.getSqlType()
+			return field.getAnnotation(SQLIdentifier.class).identifierName() + " " + type.getSqlType()
 					+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
 
 		} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
@@ -39,12 +42,12 @@ public class SQLClassHelper {
 
 			SQLForeignKey foreign = field.getAnnotation(SQLForeignKey.class);
 			Field fk = getPrimaryKey(field.getType());
-			type = SQLType.getSqlType(fk.getType());
-			return foreign.name() + type.getSqlType() + (foreign.required() ? SQLDataDefinition.NOT_NULL : " ");
+			type = SQLMySqlType.getSqlType(fk.getType());
+			return foreign.name() + " " + type.getSqlType() + (foreign.required() ? SQLDataDefinition.NOT_NULL : "");
 
 		} else {
 
-			return field.getName() + type.getSqlType();
+			return field.getName() + " " + type.getSqlType();
 
 		}
 	}

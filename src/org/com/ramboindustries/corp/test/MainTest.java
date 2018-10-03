@@ -1,11 +1,15 @@
 package org.com.ramboindustries.corp.test;
 
-import org.com.ramboindustries.corp.sql.SQLClassHelper;
+import org.com.ramboindustries.corp.sql.abstracts.SQLConnection;
+import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
 
 public class MainTest {
 
 	public static void main(String[] args) throws Exception {
+		
+		
+		SQLConnection connection = new SQLConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
 		
 		Company company = new Company();
 		company.setId(20L);
@@ -25,7 +29,10 @@ public class MainTest {
 		
 		System.out.println(employerScript);
 		
-		System.out.println(SQLClassHelper.<Company, Long>getPrimaryKeyValue(company));
+		connection.createConnection();
+		connection.createPreparedStatement(companyScript);
+	//	connection.executeSQL();
+		
 		
 	}
 		

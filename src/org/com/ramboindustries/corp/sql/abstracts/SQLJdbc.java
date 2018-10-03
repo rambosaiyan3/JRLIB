@@ -1,9 +1,9 @@
-package org.com.ramboindustries.corp.sql.utils;
+package org.com.ramboindustries.corp.sql.abstracts;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-public interface JdbcSQL {
+public interface SQLJdbc {
 
 	public void createConnection() throws SQLException;
 
@@ -21,4 +21,7 @@ public interface JdbcSQL {
 
 	public void closeAll() throws SQLException;
 
+	public void commit() throws SQLException;
+	
+	public void rollback() throws SQLException;
 }

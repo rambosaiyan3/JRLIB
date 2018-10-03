@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.sql.SQLPermission;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -13,16 +12,15 @@ import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.SQLConstants;
-import org.com.ramboindustries.corp.sql.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.SQLInsert;
 import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.SQLUpdate;
 import org.com.ramboindustries.corp.sql.SQLWhereCondition;
-import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
+import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
@@ -88,8 +86,8 @@ public final class SQLUtils {
 	}
 
 	public String getTableName(Class<?> clazz) {
-		return clazz.isAnnotationPresent(SQLTable.class) ? clazz.getAnnotation(SQLTable.class).table()
-				: clazz.getSimpleName();
+		return clazz.isAnnotationPresent(SQLTable.class) ?  clazz.getAnnotation(SQLTable.class).table()
+				:  clazz.getSimpleName() ;
 	}
 
 	public <E> String createInsertScriptSQL(E object)
@@ -116,7 +114,7 @@ public final class SQLUtils {
 		return SQLConstants.updateSQL(getTableName(object), sqlUpdate.getUpdateScript(), sqlUpdate.getWhereCondition());
 	}
 
-	protected static void setParametersPreparedStatement(PreparedStatement preparedStatement,
+	public static void setParametersPreparedStatement(PreparedStatement preparedStatement,
 			Map<Integer, Object> parameters) {
 		parameters.forEach((key, value) -> {
 			try {
@@ -149,7 +147,7 @@ public final class SQLUtils {
 
 	private String createPrimaryKeyConstraint(String constraint, Field field) {
 		String name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
+		return SQLDataDefinition.CONSTRAINT + " " +  constraint + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
 	}
 
 	private String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
@@ -158,9 +156,22 @@ public final class SQLUtils {
 				+ SQLDataDefinition.REFERENCES + getTableName(clazzReferenced) + "(" + fieldReferenced + ")";
 	}
 
+	private boolean dropTable(Class<?> clazz) {
+		if(clazz.isAnnotationPresent(SQLTable.class)) {
+			return clazz.getAnnotation(SQLTable.class).dropTableIfExists();
+		}
+		return false;
+	}
+	
 	public String createTableScript(Class<?> clazz) throws SQLIdentifierException {
 		Field[] fields = clazz.getDeclaredFields();
-		StringBuilder sql = new StringBuilder(SQLConstants.CREATE_TABLE + getTableName(clazz) + " ( ");
+		StringBuilder sql = new StringBuilder();
+		
+		if(dropTable(clazz)) {
+	//		sql.append(SQLDataDefinition.DROP_TABLE_IF_EXISTS + getTableName(clazz) + ";\n");
+		}
+		sql.append(SQLDataDefinition.CREATE_TABLE + getTableName(clazz) + " (\n");
+
 		Field primaryKey = null;
 		byte id = 0;
 		List<String> foreignConstraints = new ArrayList<>();
@@ -174,7 +185,7 @@ public final class SQLUtils {
 					foreignConstraints.add(createForeignKeyConstraint(("FK_" + getTableName(clazz) + "_" + getTableName(field.getType())) , field,field.getType()));
 				}
 				sql.append(SQLClassHelper.attributeToSQLColumn(field));
-				sql.append(", ");
+				sql.append(",\n");
 			}
 
 			
@@ -192,7 +203,7 @@ public final class SQLUtils {
 		
 		foreignConstraints.forEach( constraint -> {
 			sql.append(constraint);
-			sql.append(", ");
+			sql.append(",\n");
 		});
 
 		int last = sql.toString().lastIndexOf(",");

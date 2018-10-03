@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql.utils;
+package org.com.ramboindustries.corp.sql.abstracts;
 
 import java.sql.Connection;
 import java.sql.DriverManager;
@@ -7,7 +7,10 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.Map;
 
-public class ConnectionSQL implements JdbcSQL {
+import org.com.ramboindustries.corp.sql.utils.SQLUtils;
+
+
+public class SQLConnection implements SQLJdbc {
 
 	private final String URL;
 	private final String USER;
@@ -16,7 +19,7 @@ public class ConnectionSQL implements JdbcSQL {
 	private ResultSet resultSet;
 	private PreparedStatement preparedStatement;
 
-	public ConnectionSQL(final String URL, final String USER, final String PASS) {
+	public SQLConnection(final String URL, final String USER, final String PASS) {
 		this.URL = URL;
 		this.USER = USER;
 		this.PASS = PASS;
@@ -50,8 +53,8 @@ public class ConnectionSQL implements JdbcSQL {
 		preparedStatement.close();
 	}
 
-	public void executeSQL(final String SQL, final PreparedStatement preparedStatement) throws SQLException {
-		preparedStatement.executeUpdate(SQL);
+	public void executeSQL() throws SQLException {
+		preparedStatement.executeUpdate();
 	}
 
 	public void executeSQL(PreparedStatement preparedStatement,
@@ -85,5 +88,17 @@ public class ConnectionSQL implements JdbcSQL {
 		if (connection != null)
 			connection.close();
 	}
+
+	@Override
+	public void commit() throws SQLException {
+		connection.commit();
+	}
+
+	@Override
+	public void rollback() throws SQLException {
+		connection.rollback();
+	}
+	
+	
 
 }

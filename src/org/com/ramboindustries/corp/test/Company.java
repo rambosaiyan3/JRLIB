@@ -4,7 +4,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 
-@SQLTable(table = "TB_COMPANY")
+@SQLTable(table = "TB_COMPANY", dropTableIfExists = true)
 public class Company {
 
 	@SQLIdentifier(identifierName = "COMPANY_ID")
