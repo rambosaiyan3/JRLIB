@@ -46,9 +46,12 @@ public class SQLClassHelper {
 			return foreign.name() + " " + type.getSqlType() + (foreign.required() ? SQLDataDefinition.NOT_NULL : "");
 
 		} else {
-
-			return field.getName() + " " + type.getSqlType();
-
+			// the class does not have a SQL annotation
+			String sqlType = type.getSqlType().substring(0, type.getSqlType().length() - 1);
+			if(!field.getType().isAssignableFrom(Boolean.class) && !field.getType().isAssignableFrom(Date.class)) {				
+				return field.getName() + " " + sqlType + "(" + type.getDefaultSize() + ")";
+			}
+			return field.getName() + " " + sqlType;
 		}
 	}
 
@@ -71,6 +74,10 @@ public class SQLClassHelper {
 	public static <E, V> V getPrimaryKeyValue(E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		Field field = getPrimaryKey(object.getClass());
+		// if the class does not have an PK
+		if (field == null) {
+			return null;
+		}
 		Class<V> clazz = (Class<V>) field.getType();
 		return ObjectAccessUtils.<E, V>callGetter(field.getName(), object, clazz);
 	}

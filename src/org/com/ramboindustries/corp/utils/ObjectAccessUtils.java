@@ -174,7 +174,7 @@ public class ObjectAccessUtils {
 			}
 		}
 		
-		//the fields that the class contains
+		//the fields that the was declared from clazz
 		Field[] fields = object.getClass().getDeclaredFields();
 		for (Field field : fields) {
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {

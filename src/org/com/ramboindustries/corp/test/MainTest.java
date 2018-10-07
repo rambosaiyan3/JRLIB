@@ -12,15 +12,15 @@ public class MainTest {
 		
 		
 		SQLConnection connection = new SQLConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
-		connection.createConnection();
+	//	connection.createConnection();
 		
 		Pessoa pessoa = new Pessoa();
-		pessoa.setId(1L);
+	//	pessoa.setId(1L);
 		pessoa.setNome("Matheus Felipe Rambo");
 		pessoa.setDataNascimento(null);
 		
 		Pessoa pessoa1 = new Pessoa();
-		pessoa1.setId(3L);
+	//	pessoa1.setId(3L);
 		pessoa1.setNome("Felipe Rambo");
 		pessoa1.setDataNascimento(null);
 		
@@ -35,7 +35,6 @@ public class MainTest {
 		escola.setNomeEscola("Primavera");
 		escola.setNumeroFuncionarios(20);
 		
-		Aluno aluno = new Aluno();
 
 		
 		SQLUtils sqlUtils = new SQLUtils();
@@ -44,9 +43,10 @@ public class MainTest {
 		String scriptInsertPessoa = sqlUtils.<Pessoa>createInsertScriptSQL(pessoa);
 		String scriptInsertDepartamento = sqlUtils.<Departamento>createInsertScriptSQL(departamento);
 		String scriptInsertEscola= sqlUtils.<Escola>createInsertScriptSQL(escola);
-		String scriptAluno = sqlUtils.createTableScript(Aluno.class);
+		String scriptAluno = sqlUtils.createTableScript(Matheus.class);
 		
 		System.out.println(scriptAluno);
+	//	sqlUtils.allFieldsToTable(Aluno.class);
 		
 	//	System.out.println(scriptDepartamento);
 	//	System.out.println(scriptInsertPessoa);

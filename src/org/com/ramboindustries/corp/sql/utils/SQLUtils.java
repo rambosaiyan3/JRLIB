@@ -6,6 +6,8 @@ import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -182,7 +184,7 @@ public final class SQLUtils {
 	}
 	
 	public String createTableScript(Class<?> clazz) throws SQLIdentifierException {
-		Field[] fields = clazz.getDeclaredFields();
+		List<Field> fields = this.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 		
 		if(dropTable(clazz)) {
@@ -191,40 +193,17 @@ public final class SQLUtils {
 		sql.append(SQLDataDefinition.CREATE_TABLE + getTableName(clazz) + " (\n");
 
 		Field primaryKey = null;
-		byte id = 0;
 		List<String> foreignConstraints = new ArrayList<>();
 		
 		for (Field field : fields) {
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {
 				if (field.isAnnotationPresent(SQLIdentifier.class)) {
 					primaryKey = field;
-					++id;
 				} else if(field.isAnnotationPresent(SQLForeignKey.class)) {
 					foreignConstraints.add(createForeignKeyConstraint(("FK_" + getTableName(clazz) + "_" + getTableName(field.getType())) , field,field.getType()));
 				}
 				sql.append(SQLClassHelper.attributeToSQLColumn(field));
 				sql.append(",\n");
-			}
-
-			if (id == 0) {
-				// the class does not have a PK
-				if (clazz.getSuperclass().getSimpleName().equals("Object")) {
-					throw new SQLIdentifierException("The class " + clazz.getSimpleName() + " does not have an Identifier annotation!");
-				} else {
-					// while he have a superclass, and it his not the Object class
-					Class<?> clazz1 = clazz.getSuperclass();
-					while (clazz1 != null && !clazz1.getSimpleName().equals(Object.class.getSimpleName())) {
-						// Gets the primary key of the superclass
-						primaryKey = SQLClassHelper.getPrimaryKey(clazz1);
-						if (primaryKey != null) {
-							++id;
-						}
-						clazz1 = clazz1.getSuperclass();
-					}
-
-				}
-			} else if (id > 1) {
-				throw new SQLIdentifierException();
 			}
 		}
 		
@@ -242,25 +221,59 @@ public final class SQLUtils {
 		return sql.delete(last, sql.length()) + ");";
 	}
 
-	private String createScriptFromSuperclass(Class<?> clazz) {
-		StringBuilder sql = new StringBuilder();
-		Field fields [] = clazz.getDeclaredFields();
-		for(Field field : fields) {
-			sql.append(SQLClassHelper.attributeToSQLColumn(field));
-			sql.append(",\n");
+	public List<Field> allFieldsToTable(Class<?> clazz) throws SQLIdentifierException{
+		List<Field> fields = new ArrayList<>();
+		
+		// gets all the superclass from the clazz
+		List<Class<?>> classes = ObjectAccessUtils.getSuperclassesFromClass(clazz, false);
+		if(classes != null && !classes.isEmpty()) {
+		
+			// reverse the list, to get the fields of superclass first
+			Collections.reverse(classes);
+		
+			// we add the fields to the top
+			classes.forEach(classe -> {
+				fields.addAll(Arrays.asList(classe.getDeclaredFields()));
+			});
 		}
-		return sql.toString();
+		
+		// we add the fields from clazz
+		fields.addAll(Arrays.asList(clazz.getDeclaredFields()));
+		
+		//we set the primary key for the first element
+		classes.add(clazz);
+		this.setPrimaryKeyPosition(fields, classes);
+		
+		return fields;
 	}
-	
-	public List<String> createScriptFromSuperclass(List<?> classes) {
-		List<String> sql = new ArrayList<>();
-		if (classes != null && !classes.isEmpty()) {
-			Class<?> clazz = (Class<?>) classes.get(0);
-			while (clazz != null && !clazz.getSimpleName().equals(Object.class.getSimpleName())) {
-				sql.add(this.createScriptFromSuperclass(clazz));
+
+	private void setPrimaryKeyPosition(List<Field> fields, List<?> classes) throws SQLIdentifierException {
+		int position = 0;
+		byte number = 0;
+		for (int i = 0; i < fields.size(); i++) {
+			if (fields.get(i).isAnnotationPresent(SQLIdentifier.class)) {
+				++number;
+				
+				// saves the position of the primary key
+				position = i;
+			}
+			// if there is more than a primary key
+			if (number > 1) {
+				throw new SQLIdentifierException();
 			}
 		}
-		return sql;
+		// if there is not a primary key
+		if (number == 0) {
+			throw new SQLIdentifierException(classes);
+		}
+		// we get the field that is the primary key
+		Field primaryKey = fields.get(position);
+		
+		// we remove him from the list
+		fields.remove(position);
+		
+		// we add him to the first position
+		fields.add(0, primaryKey);
 	}
 	
 }

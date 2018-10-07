@@ -9,8 +9,6 @@ import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 @SQLTable(table = "TB_PESSOA", dropTableIfExists = true)
 public class Pessoa {
 
-	@SQLIdentifier(identifierName = "PESSOA_ID")
-	private Long id;
 	
 	@SQLColumn(name = "NOME", required = true, length = 120)
 	private String nome;
@@ -18,12 +16,7 @@ public class Pessoa {
 	private Date dataNascimento;
 	
 	
-	public Long getId() {
-		return id;
-	}
-	public void setId(Long id) {
-		this.id = id;
-	}
+
 	public String getNome() {
 		return nome;
 	}
