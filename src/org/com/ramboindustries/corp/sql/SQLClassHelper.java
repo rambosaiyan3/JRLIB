@@ -52,6 +52,11 @@ public class SQLClassHelper {
 		}
 	}
 
+	/**
+	 * Returns the field that is the PK of the class
+	 * @param clazz that we want to know its PK
+	 * @return 
+	 */
 	public static Field getPrimaryKey(Class<?> clazz) {
 		Field[] fields = clazz.getDeclaredFields();
 		for (Field field : fields) {
@@ -69,5 +74,7 @@ public class SQLClassHelper {
 		Class<V> clazz = (Class<V>) field.getType();
 		return ObjectAccessUtils.<E, V>callGetter(field.getName(), object, clazz);
 	}
+	
 
+	
 }

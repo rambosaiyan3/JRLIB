@@ -13,11 +13,11 @@ public final class SQLDataDefinition {
 	public static String DROP_TABLE_IF_EXISTS = "DROP TABLE IF EXISTS ";
 	public static String TRUNCATE_TABLE = "TRUNCATE TABLE ";
 	public static String NOT_NULL = "NOT NULL";
-	public static String PRIMARY_KEY = "PRIMARY KEY ";
+	public static String PRIMARY_KEY = " PRIMARY KEY ";
 	public static String CONSTRAINT = "CONSTRAINT ";
-	public static String FOREIGN_KEY = "FOREIGN KEY ";
+	public static String FOREIGN_KEY = " FOREIGN KEY ";
 	public static String AUTO_INCREMENT = " AUTO_INCREMENT";
-	public static String REFERENCES = "REFERENCES";
+	public static String REFERENCES = " REFERENCES ";
 	
 	private SQLDataDefinition() {
 		

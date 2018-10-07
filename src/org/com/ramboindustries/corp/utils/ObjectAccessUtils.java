@@ -12,8 +12,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.com.ramboindustries.corp.sql.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
+import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
@@ -38,27 +40,30 @@ public class ObjectAccessUtils {
 		Map<String, Object> keyValue = new HashMap<>();
 		Field[] objectFields = object.getClass().getDeclaredFields();
 		byte identifier = 0;
-		
+
 		for (Field field : objectFields) {
 			field.setAccessible(true);
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {
-				if(field.isAnnotationPresent(SQLIdentifier.class)) {
+				if (field.isAnnotationPresent(SQLIdentifier.class)) {
 					keyValue.put(field.getDeclaredAnnotation(SQLIdentifier.class).identifierName(), field.get(object));
 					++identifier;
-				}
-				else if (field.isAnnotationPresent(SQLColumn.class)) {
+				} else if (field.isAnnotationPresent(SQLColumn.class)) {
 					keyValue.put(field.getDeclaredAnnotation(SQLColumn.class).name(), field.get(object));
+				} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
+					keyValue.put(field.getAnnotation(SQLForeignKey.class).name(), SQLClassHelper.getPrimaryKey(field.get(object).getClass()));
 				} else {
-					keyValue.put(field.getName(), field.get(object));
 				}
+				keyValue.put(field.getName(), field.get(object));
+
 				field.setAccessible(false);
-				if(identifier > 1) {
+				if (identifier > 1) {
 					throw new SQLIdentifierException();
 				}
 			}
 		}
-		if(identifier == 0) {
-			throw new SQLIdentifierException("The " + object.getClass().getSimpleName() + " does not have a identifier!");
+		if (identifier == 0) {
+			throw new SQLIdentifierException(
+					"The " + object.getClass().getSimpleName() + " does not have a identifier!");
 		}
 		return keyValue;
 	}
@@ -70,8 +75,10 @@ public class ObjectAccessUtils {
 	 */
 	public static List<Class<?>> getSuperclassesFromClass(Class<?> clazz, boolean getObjectClass) {
 		List<Class<?>> classes = new ArrayList<>();
+		// if clazz is the Object
 		if (clazz.getSimpleName().equals(Object.class.getSimpleName()))
 			return classes;
+		// we add it superclass to the set
 		classes.add(clazz.getSuperclass());
 		if (classes.get(0) != null) {
 			byte i = 0;
@@ -117,14 +124,34 @@ public class ObjectAccessUtils {
 	private static <E> SQLJavaField createSqlJavaField(Field field, E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		SQLJavaField sqlJavaField = new SQLJavaField();
+	
+		// set the field to access its value
 		field.setAccessible(true);
-		sqlJavaField.setSqlColumn(field.getName());
+
 		if (field.isAnnotationPresent(SQLColumn.class)) {
+			// if the field its a normal column
 			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
 		} else if(field.isAnnotationPresent(SQLIdentifier.class)){
-			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
+			// if the field is a PK
+			sqlJavaField.setSqlColumn(field.getAnnotation(SQLIdentifier.class).identifierName());
+		}else if(field.isAnnotationPresent(SQLForeignKey.class)) {
+			// if the field is a FK
+			sqlJavaField.setSqlColumn(field.getAnnotation(SQLForeignKey.class).name());
+		}else {
+			// the field has no annotation
+			sqlJavaField.setSqlColumn(field.getName());
 		}
-		sqlJavaField.setValue(ObjectAccessUtils.<E>callGetter(field.getName(), object));
+		
+		if (field.isAnnotationPresent(SQLForeignKey.class)) {
+			// gets the class type of the PK 
+			
+			Object obj = ObjectAccessUtils.<E>callGetter(field.getName(), object);
+			sqlJavaField.setValue(SQLClassHelper.getPrimaryKeyValue(obj));
+						
+		} else {
+			sqlJavaField.setValue(ObjectAccessUtils.<E>callGetter(field.getName(), object));
+		}
+		
 		field.setAccessible(false);
 		return sqlJavaField;
 	}
@@ -133,16 +160,21 @@ public class ObjectAccessUtils {
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		List<Class<?>> classes = getSuperclassesFromClass(object.getClass(), getObjectClass);
 		Set<SQLJavaField> allFields = new HashSet<>();
+	
+		// the fields of the super classes
 		if (classes != null && !classes.isEmpty()) {
 			for (int i = classes.size() -1; i >= 0; i--) {
 				Field fields[] = classes.get(i).getDeclaredFields();
 				for (Field field : fields) {
 					if (!field.isAnnotationPresent(SQLIgnore.class)) {
+						// if the field is not ignorable for sql
 						allFields.add(ObjectAccessUtils.<E>createSqlJavaField(field, object));
 					}
 				}
 			}
 		}
+		
+		//the fields that the class contains
 		Field[] fields = object.getClass().getDeclaredFields();
 		for (Field field : fields) {
 			if (!field.isAnnotationPresent(SQLIgnore.class)) {

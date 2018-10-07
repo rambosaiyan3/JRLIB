@@ -145,17 +145,35 @@ public final class SQLUtils {
 		});
 	}
 
+	/**
+	 * Creates a Primary Key constraint for the table
+	 * @param constraint the name of constraint
+	 * @param field the field that is the primary key
+	 * @return a String that contains the line
+	 */
 	private String createPrimaryKeyConstraint(String constraint, Field field) {
 		String name = field.getAnnotation(SQLIdentifier.class).identifierName();
 		return SQLDataDefinition.CONSTRAINT + " " +  constraint + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
 	}
 
+	/**
+	 * Creates a Foreign Key constraint for the table
+	 * @param constraint the name of constraint
+	 * @param field the field that is the foreign key
+	 * @param clazzReferenced class that has the primary key
+	 * @return a String that contains the line
+	 */
 	private String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
 		String fieldReferenced = SQLClassHelper.getPrimaryKey(clazzReferenced).getAnnotation(SQLIdentifier.class).identifierName();
 		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.FOREIGN_KEY + "(" + field.getAnnotation(SQLForeignKey.class).name() + ")"
 				+ SQLDataDefinition.REFERENCES + getTableName(clazzReferenced) + "(" + fieldReferenced + ")";
 	}
 
+	/**
+	 * IF the class has to drop the table before creating a one
+	 * @param clazz 
+	 * @return
+	 */
 	private boolean dropTable(Class<?> clazz) {
 		if(clazz.isAnnotationPresent(SQLTable.class)) {
 			return clazz.getAnnotation(SQLTable.class).dropTableIfExists();
@@ -168,7 +186,7 @@ public final class SQLUtils {
 		StringBuilder sql = new StringBuilder();
 		
 		if(dropTable(clazz)) {
-	//		sql.append(SQLDataDefinition.DROP_TABLE_IF_EXISTS + getTableName(clazz) + ";\n");
+			sql.append(SQLDataDefinition.DROP_TABLE_IF_EXISTS + getTableName(clazz) + "; ");
 		}
 		sql.append(SQLDataDefinition.CREATE_TABLE + getTableName(clazz) + " (\n");
 
@@ -188,17 +206,31 @@ public final class SQLUtils {
 				sql.append(",\n");
 			}
 
-			
 			if (id == 0) {
-				throw new SQLIdentifierException("The class " + clazz.getSimpleName() + " does not have an Identifier annotation!" );
-			}else if (id > 1) {
+				// the class does not have a PK
+				if (clazz.getSuperclass().getSimpleName().equals("Object")) {
+					throw new SQLIdentifierException("The class " + clazz.getSimpleName() + " does not have an Identifier annotation!");
+				} else {
+					// while he have a superclass, and it his not the Object class
+					Class<?> clazz1 = clazz.getSuperclass();
+					while (clazz1 != null && !clazz1.getSimpleName().equals(Object.class.getSimpleName())) {
+						// Gets the primary key of the superclass
+						primaryKey = SQLClassHelper.getPrimaryKey(clazz1);
+						if (primaryKey != null) {
+							++id;
+						}
+						clazz1 = clazz1.getSuperclass();
+					}
+
+				}
+			} else if (id > 1) {
 				throw new SQLIdentifierException();
 			}
 		}
 		
 		if (primaryKey != null) {
 			sql.append(createPrimaryKeyConstraint("PK_" + getTableName(clazz), primaryKey));
-			sql.append(", ");
+			sql.append(",\n");
 		}
 		
 		foreignConstraints.forEach( constraint -> {
@@ -210,4 +242,25 @@ public final class SQLUtils {
 		return sql.delete(last, sql.length()) + ");";
 	}
 
+	private String createScriptFromSuperclass(Class<?> clazz) {
+		StringBuilder sql = new StringBuilder();
+		Field fields [] = clazz.getDeclaredFields();
+		for(Field field : fields) {
+			sql.append(SQLClassHelper.attributeToSQLColumn(field));
+			sql.append(",\n");
+		}
+		return sql.toString();
+	}
+	
+	public List<String> createScriptFromSuperclass(List<?> classes) {
+		List<String> sql = new ArrayList<>();
+		if (classes != null && !classes.isEmpty()) {
+			Class<?> clazz = (Class<?>) classes.get(0);
+			while (clazz != null && !clazz.getSimpleName().equals(Object.class.getSimpleName())) {
+				sql.add(this.createScriptFromSuperclass(clazz));
+			}
+		}
+		return sql;
+	}
+	
 }
