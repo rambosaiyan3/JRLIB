@@ -1,9 +1,18 @@
 package org.com.ramboindustries.corp.sql.commands;
 
-public class SQLDataManipulation {
+public final class SQLDataManipulation {
 
-	public static String INSERT = " INSERT ";
-	public static String SELECT = " SELECT ";
-	public static String UPDATE = " UPDATE ";
+	public final static String INSERT = " INSERT ";
+	public final static String SELECT = " SELECT ";
+	public final static String SELECT_FROM = " SELECT * FROM ";
+	public final static String UPDATE = " UPDATE ";
+	public final static String WHERE = " WHERE ";
+	public final static String WHERE_TRUE = " WHERE 1 = 1 ";
+	public final static String SET = " SET ";
+	public final static String AND = " AND ";
+	
+	private SQLDataManipulation() {
+		
+	}
 	
 }

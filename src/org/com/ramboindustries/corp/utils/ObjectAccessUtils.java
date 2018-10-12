@@ -185,6 +185,29 @@ public class ObjectAccessUtils {
 	}
 	
 	
+	public static String getFieldsName(final Field [] fields) {
+		StringBuilder x = new StringBuilder();
+		for(Field field : fields) {
+			x.append(field.getName() + ", ");
+		}	
+		return x.delete(x.lastIndexOf("x"), x.length()).toString();
+	}
+	
+	public static <E> E initObject(Class<E> clazz) throws InstantiationException, IllegalAccessException {
+		return clazz.newInstance();
+	}
+	
+		public static String getName(Field field) {
+		if (field.isAnnotationPresent(SQLIdentifier.class)) {
+			return field.getAnnotation(SQLIdentifier.class).identifierName();
+		} else if (field.isAnnotationPresent(SQLColumn.class)) {
+			return field.getAnnotation(SQLColumn.class).name();
+		} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
+			return field.getAnnotation(SQLForeignKey.class).name();
+		} else {
+			return field.getName();
+		}
+	}
 	
 }
 

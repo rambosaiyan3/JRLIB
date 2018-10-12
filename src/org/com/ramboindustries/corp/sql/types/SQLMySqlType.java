@@ -2,12 +2,14 @@ package org.com.ramboindustries.corp.sql.types;
 
 public enum SQLMySqlType {
 	
-	BYTE("TINYINT ", 4),
-	SHORT("SMALLINT " , 4),
-	INT("INT ", 4),
-	LONG("BIGINT ", 4),
+	BYTE("TINYINT "),
+	SHORT("SMALLINT "),
+	INT("INT "),
+	LONG("BIGINT "),
+	DECIMAl("DECIMAL "),
+	FLOAT("FLOAT "),
+	DOUBLE("DOUBLE "),
 	STRING("VARCHAR ", 10),
-	DOUBLE("DOUBLE ", 4),
 	BOOLEAN("BOOLEAN "),
 	DATE("DATE ");
 

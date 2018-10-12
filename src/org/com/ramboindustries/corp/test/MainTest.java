@@ -1,7 +1,10 @@
 package org.com.ramboindustries.corp.test;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.List;
 
+import org.com.ramboindustries.corp.sql.SQLConditionType;
+import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLConnection;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
@@ -12,17 +15,15 @@ public class MainTest {
 		
 		
 		SQLConnection connection = new SQLConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
-	//	connection.createConnection();
+
 		
 		Pessoa pessoa = new Pessoa();
 	//	pessoa.setId(1L);
 		pessoa.setNome("Matheus Felipe Rambo");
-		pessoa.setDataNascimento(null);
 		
 		Pessoa pessoa1 = new Pessoa();
 	//	pessoa1.setId(3L);
 		pessoa1.setNome("Felipe Rambo");
-		pessoa1.setDataNascimento(null);
 		
 		Departamento departamento = new Departamento();
 		departamento.setNome("Desenvolvimento");
@@ -46,38 +47,14 @@ public class MainTest {
 		String scriptAluno = sqlUtils.createTableScript(Matheus.class);
 		
 		System.out.println(scriptAluno);
-	//	sqlUtils.allFieldsToTable(Aluno.class);
 		
-	//	System.out.println(scriptDepartamento);
-	//	System.out.println(scriptInsertPessoa);
-//		System.out.println(scriptInsertDepartamento);
-	//	System.out.println(scriptInsertEscola);
-	
-		//connection.createPreparedStatement(scriptInsertPessoa);
-	//	connection.executeSQL();
-	//	connection.closePreparedStatement();
+		List<SQLWhereCondition> co = new ArrayList<>();
+		co.add(new SQLWhereCondition("nome", "'Felipe Rambo'", SQLConditionType.EQUAL));
+		co.add(new SQLWhereCondition("nota", "5200", SQLConditionType.GREATER_THAN_OR_EQUAL));
 		
+		System.out.println(sqlUtils.createSQLSelectScript(Matheus.class, co));
 
-	//	connection.createPreparedStatement(scriptInsertDepartamento);
-	//	connection.executeSQL();
-	//	connection.closePreparedStatement();
 		
-
-	//	connection.createPreparedStatement(scriptInsertEscola);
-	//	connection.executeSQL();
-	//	connection.closePreparedStatement();
-		
-		
-		
-		/*
-		connection.createPreparedStatement(scriptDepartamento);
-		connection.executeSQL();
-		connection.closePreparedStatement();
-		
-		connection.createPreparedStatement(scriptEscola);
-		connection.executeSQL();
-		connection.closePreparedStatement();
-	*/
 	}
 		
 

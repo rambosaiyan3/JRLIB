@@ -8,6 +8,7 @@ import java.util.Date;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
+import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
@@ -23,9 +24,15 @@ public class SQLClassHelper {
 			SQLColumn column = field.getAnnotation(SQLColumn.class);
 
 			if (field.getType() != Boolean.class && field.getType() != Date.class) {
-				String sqltype = type.getSqlType().substring(0, type.getSqlType().length() - 1) ;
-				return column.name() + " " + sqltype + "(" + column.length() + ") "
-						+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
+
+				if (field.getType() == String.class) {
+					String sqltype = type.getSqlType().substring(0, type.getSqlType().length() - 1);
+					return column.name() + " " + sqltype + "(" + column.length() + ") "
+							+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
+				} else {
+					return column.name() + " " + type.getSqlType()
+							+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
+				}
 			}
 
 			return column.name() + " " + type.getSqlType() + (column.required() ? SQLDataDefinition.NOT_NULL : "");
@@ -36,7 +43,7 @@ public class SQLClassHelper {
 					+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
 
 		} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
-			
+
 			// because this field references another object
 			// so, we will get the type of the PK of it
 
@@ -48,8 +55,12 @@ public class SQLClassHelper {
 		} else {
 			// the class does not have a SQL annotation
 			String sqlType = type.getSqlType().substring(0, type.getSqlType().length() - 1);
-			if(!field.getType().isAssignableFrom(Boolean.class) && !field.getType().isAssignableFrom(Date.class)) {				
-				return field.getName() + " " + sqlType + "(" + type.getDefaultSize() + ")";
+			if (!field.getType().isAssignableFrom(Boolean.class) && !field.getType().isAssignableFrom(Date.class)) {
+				if (field.getType().isAssignableFrom(String.class)) {
+					return field.getName() + " " + sqlType + "(" + type.getDefaultSize() + ")";
+				} else {
+					return field.getName() + " " + sqlType;
+				}
 			}
 			return field.getName() + " " + sqlType;
 		}
@@ -57,8 +68,9 @@ public class SQLClassHelper {
 
 	/**
 	 * Returns the field that is the PK of the class
+	 * 
 	 * @param clazz that we want to know its PK
-	 * @return 
+	 * @return
 	 */
 	public static Field getPrimaryKey(Class<?> clazz) {
 		Field[] fields = clazz.getDeclaredFields();
@@ -69,7 +81,7 @@ public class SQLClassHelper {
 		}
 		return null;
 	}
-	
+
 	@SuppressWarnings("unchecked")
 	public static <E, V> V getPrimaryKeyValue(E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
@@ -81,7 +93,27 @@ public class SQLClassHelper {
 		Class<V> clazz = (Class<V>) field.getType();
 		return ObjectAccessUtils.<E, V>callGetter(field.getName(), object, clazz);
 	}
-	
 
-	
+	/**
+	 * Call it to change the name of the PK
+	 * 
+	 * @param field
+	 * @param clazz
+	 * @return
+	 */
+	public static String attributeToSQLColumn(Field field, Class<?> clazz) {
+		if (field.isAnnotationPresent(SQLIdentifier.class) && clazz.isAnnotationPresent(SQLInheritancePK.class)) {
+			SQLMySqlType type = SQLMySqlType.getSqlType(field.getType());
+			if (!field.getType().isAssignableFrom(Date.class) && !field.getType().isAssignableFrom(Boolean.class)) {
+				return clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName() + " " + type.getSqlType()
+						+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
+			}
+
+			return clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName() + " " + type.getSqlType()
+					+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
+		}
+		return attributeToSQLColumn(field);
+
+	}
+
 }

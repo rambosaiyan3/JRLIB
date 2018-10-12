@@ -18,4 +18,5 @@ public @interface SQLColumn {
 	public String name();
 	public int length() default 4;
 	public boolean required () default false;
+	public int precision () default 2;
 }

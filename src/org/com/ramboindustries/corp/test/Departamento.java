@@ -52,6 +52,11 @@ public class Departamento {
 		this.lider = lider;
 	}
 
+	@Override
+	public String toString() {
+		return "Departamento [id=" + id + ", nome=" + nome + ", sigla=" + sigla + ", lider=" + lider + "]";
+	}
+
 	
 	
 	
