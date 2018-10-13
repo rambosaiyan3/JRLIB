@@ -10,6 +10,7 @@ public final class SQLDataManipulation {
 	public final static String WHERE_TRUE = " WHERE 1 = 1 ";
 	public final static String SET = " SET ";
 	public final static String AND = " AND ";
+	public final static String FROM = " FROM ";
 	
 	private SQLDataManipulation() {
 		

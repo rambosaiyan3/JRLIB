@@ -9,130 +9,174 @@ import java.util.ArrayList;
 import java.util.List;
 
 import org.com.ramboindustries.corp.sql.abstracts.SQLConnection;
+import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
+import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
+import org.com.ramboindustries.corp.test.Aluno;
 import org.com.ramboindustries.corp.test.Matheus;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
-public class JDBCConnection extends SQLConnection {
+public final class JDBCConnection extends SQLConnection {
 
-	private SQLUtils sqlUtils;
+	private final SQLUtils SQL_UTILS;
 
 	public JDBCConnection(String URL, String USER, String PASS) {
 		super(URL, USER, PASS);
-		sqlUtils = new SQLUtils();
+		SQL_UTILS = new SQLUtils();
 	}
 
 	/**
 	 * Simple SELECT * FROM TABLE
+	 * 
 	 * @param clazz that represents the table
 	 * @return an array list with all the objects and it's relationships
-	 * @throws Exception
+	 * @throws SQLException 
 	 */
-	public <E> List<E> selectFrom(Class<E> clazz, boolean showSql) throws Exception {
-		String script = sqlUtils.<E>createSQLSelectScript(clazz);
-		
-		if(showSql) {
-			System.out.println(" INIT SQL >>  " + script + " << END SQL ");
+	public <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
+		final String SCRIPT = SQL_UTILS.<E>createSQLSelectScript(CLAZZ);
+		if (SHOW_SQL) {
+			SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
-		List<Field> fields = sqlUtils.allFieldsToTable(clazz);
-		
+		final List<Field> FIELDS = SQL_UTILS.allFieldsToTable(CLAZZ);
+
 		// init the list of objects
 		List<E> objects = new ArrayList<>();
 
 		// will capture the lines of the table
-		ResultSet resultSet = super.executeSQLSelect(script);
+		final ResultSet RESULT_SET = super.executeSQLSelect(SCRIPT);
 
-		while (resultSet.next()) {
-			objects.add(this.createObjectFromLine(resultSet, fields, clazz, showSql));
+		while (RESULT_SET.next()) {
+			try {
+				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+				e.printStackTrace();
+				throw new SQLException(e);
+			}
 		}
 
 		return objects;
 	}
-	
+
 	/**
 	 * Select FROM Table with a WHERE clause
-	 * @param clazz that represents the table
+	 * 
+	 * @param clazz             that represents the table
 	 * @param sqlWhereCondition the condidion
 	 * @return an array list
+	 * @throws SQLException 
 	 * @throws Exception
 	 */
-	public <E> List<E> selectFrom(Class<E> clazz, SQLWhereCondition sqlWhereCondition, boolean showSql) throws Exception{
-		String script = sqlUtils.createSQLSelectScript(clazz, sqlWhereCondition);
+	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION,
+			final boolean SHOW_SQL) throws SQLException {
+		final String SCRIPT = SQL_UTILS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 
-		if (showSql) {
-			System.out.println(" INIT SQL >>  " + script + " << END SQL ");
+		if (SHOW_SQL) {
+			SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
-		
-		List<Field> fields = sqlUtils.allFieldsToTable(clazz);
-		
-		List<E> objects = new ArrayList<>();
-		ResultSet resultSet = super.executeSQLSelect(script);
 
-		while (resultSet.next()) {
-			objects.add(this.createObjectFromLine(resultSet, fields, clazz, showSql));
+		final List<Field> FIELDS = SQL_UTILS.allFieldsToTable(CLAZZ);
+
+		List<E> objects = new ArrayList<>();
+		final ResultSet RESULT_SET = super.executeSQLSelect(SCRIPT);
+
+		while (RESULT_SET.next()) {
+			try {
+				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+				e.printStackTrace();
+				throw new SQLException(e);
+			}
 		}
 
 		return objects;
 	}
-	
-	
-	public <E> List<E> selectFrom(Class<E> clazz, List<SQLWhereCondition> sqlWhereConditions, boolean showSql) throws Exception {
-	
-		String script = sqlUtils.createSQLSelectScript(clazz, sqlWhereConditions);
-		if (showSql) {
-			System.out.println(" INIT SQL >>  " + script + " << END SQL ");
+
+	public <E> List<E> selectFrom(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS,
+			final boolean SHOW_SQL) throws SQLException {
+
+		final String SCRIPT = SQL_UTILS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
+		if (SHOW_SQL) {
+			SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
-		List<Field> fields = sqlUtils.allFieldsToTable(clazz);
+		final List<Field> FIELDS = SQL_UTILS.allFieldsToTable(CLAZZ);
 
 		List<E> objects = new ArrayList<>();
-		ResultSet resultSet = super.executeSQLSelect(script);
+		final ResultSet RESULT_SET = super.executeSQLSelect(SCRIPT);
 
-		while (resultSet.next()) {
-			objects.add(this.createObjectFromLine(resultSet, fields, clazz, showSql));
+		while (RESULT_SET.next()) {
+			try {
+				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+				e.printStackTrace();
+				throw new SQLException(e);
+			}
 		}
 
 		return objects;
-
 	}
-	
-	
-	private <E> E createObjectFromLine(ResultSet resultSet, List<Field> fields, Class<E> clazz, boolean showSql)throws Exception{
+
+	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL) throws SQLException {
+		final String SCRIPT = SQL_UTILS.createSQLSelectScript(CLAZZ, COLUMNS);
+
+		if (SHOW_SQL) {
+			SQL_UTILS.SQL_LOGGER(SCRIPT);
+		}
+		List<Object[]> objects = new ArrayList<>();
+		final ResultSet RESULT_SET = super.executeSQLSelect(SCRIPT);
+
+		while (RESULT_SET.next()) {
+			final byte LENGTH = (byte) COLUMNS.length;
+			final Object[] OBJECT = new Object[LENGTH];
+			for (byte i = 0; i < LENGTH; i++) {
+				OBJECT[i] = super.getSQLValue(SQL_UTILS.getColumnNameFromField(COLUMNS[i]), RESULT_SET,
+						COLUMNS[i].getType());
+			}
+			objects.add(OBJECT);
+		}
+		return objects;
+	}
+
+	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
+			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException, IntrospectionException {
 
 		// create and initialize the object
-		E object = ObjectAccessUtils.<E>initObject(clazz);
-		
-		
+		E object = ObjectAccessUtils.<E>initObject(CLAZZ);
+
 		// set the primary key value, for the first item of the element
 		// primary key, will always be the first element
-		this.setPrimaryKeyValue(object, clazz, resultSet, fields.get(0));
-				
+		this.setPrimaryKeyValue(object, CLAZZ, RESULT_SET, FIELDS.get(0));
+
+		final byte FIELDS_SIZE = (byte) FIELDS.size();
+
 		// iterate over fields, the primary key was already set, so we can start at 1
-		for (byte i = 1; i < fields.size(); i ++) {
+		for (byte i = 1; i < FIELDS_SIZE; i++) {
 
 			// get the name of the field
-			final String FIELD_NAME = fields.get(i).getName();
-		
-			if (sqlUtils.isFieldRelationship(fields.get(i))) {
+			final String FIELD_NAME = FIELDS.get(i).getName();
+
+			if (SQL_UTILS.isFieldRelationship(FIELDS.get(i))) {
 				// if the field is a foreign key, so we have to create an object
-				
-				final String COLUMN_RELATIONSHIP = sqlUtils.getColumnNameFromField(SQLClassHelper.getPrimaryKey(fields.get(i).getType()));
-				final Object COLUMN_VALUE = super.getSQLValue(COLUMN_RELATIONSHIP, resultSet, fields.get(i).getType());
+
+				final String COLUMN_RELATIONSHIP = SQL_UTILS
+						.getColumnNameFromField(SQLClassHelper.getPrimaryKey(FIELDS.get(i).getType()));
+				final Object COLUMN_VALUE = super.getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET, FIELDS.get(i).getType());
 
 				// creates a where condition
-				SQLWhereCondition sqlWhereCondition = new SQLWhereCondition(COLUMN_RELATIONSHIP, COLUMN_VALUE,SQLConditionType.EQUAL);
-				Object value =	this.getSQLColumnValue(fields.get(i).getType(), sqlWhereCondition, showSql);
-			
-				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, value);
-				
+				final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(COLUMN_RELATIONSHIP, COLUMN_VALUE,
+						SQLConditionType.EQUAL);
+				final Object VALUE = this.getSQLColumnValue(FIELDS.get(i).getType(), WHERE_CONDITION, SHOW_SQL);
+
+				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, VALUE);
+
 			} else {
 				// this is a normal field, that we do not need to create an object to them
-				
-				final String COLUMN_NAME = sqlUtils.getColumnNameFromField(fields.get(i));
-				
-				final Object COLUMN_VALUE = super.getSQLValue(COLUMN_NAME, resultSet, fields.get(i).getType());
+
+				final String COLUMN_NAME = SQL_UTILS.getColumnNameFromField(FIELDS.get(i));
+
+				final Object COLUMN_VALUE = super.getSQLValue(COLUMN_NAME, RESULT_SET, FIELDS.get(i).getType());
 
 				// calls the object setter
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, COLUMN_VALUE);
@@ -141,118 +185,101 @@ public class JDBCConnection extends SQLConnection {
 		}
 		return object;
 	}
-	
 
-	private Object getSQLColumnValue(Class<?> clazz, SQLWhereCondition sqlWhereCondition, boolean showSql) throws Exception {
+	private Object getSQLColumnValue(final Class<?> CLAZZ, final SQLWhereCondition WHERE_CONDITION,
+			final boolean SHOW_SQL) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
+			SQLException, IntrospectionException, InstantiationException, SQLIdentifierException {
 
 		// creates the select script
-		String script = sqlUtils.createSQLSelectScript(clazz, sqlWhereCondition);
+		final String SCRIPT = SQL_UTILS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 
-		if(showSql) {
-			System.out.println(" INIT SQL >>  " + script + " << END SQL ");
+		if (SHOW_SQL) {
+			SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
-		
+
 		// gets all the fields
-		List<Field> fields = sqlUtils.allFieldsToTable(clazz);
+		final List<Field> FIELDS = SQL_UTILS.allFieldsToTable(CLAZZ);
 
 		// creates the result
-		ResultSet resultSet = super.executeSQLSelect(script);
+		final ResultSet RESULT_SET = super.executeSQLSelect(SCRIPT);
 
 		// get the first and unique row
-		resultSet.next();
+		RESULT_SET.next();
 
 		// initialize the object
-		Object object = ObjectAccessUtils.initObject(clazz);
+		Object object = ObjectAccessUtils.initObject(CLAZZ);
 
 		// iterate over the fields
-		for (Field field : fields) {
-			this.setValueToObject(object, field.getType(), field, resultSet, showSql);
+		for (final Field FIELD : FIELDS) {
+			this.setValueToObject(object, FIELD.getType(), FIELD, RESULT_SET, SHOW_SQL);
 		}
 
 		return object;
 	}
 
-	
-	private void setValueToObject(Object object, Class<?> clazz, Field field, ResultSet resultSet, boolean showSql) throws Exception {
-		final String FIELD_NAME = field.getName();
+	private void setValueToObject(Object object, final Class<?> CLAZZ, final Field FIELD, final ResultSet RESULT_SET,
+			final boolean SHOW_SQL) throws SQLException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, IntrospectionException, InstantiationException, SQLIdentifierException {
+		final String FIELD_NAME = FIELD.getName();
 
-		if (sqlUtils.isFieldRelationship(field)) {
+		if (SQL_UTILS.isFieldRelationship(FIELD)) {
 			// get the name of table of the field
-			final String COLUMN_NAME = sqlUtils.getColumnNameFromField(field);
+			final String COLUMN_NAME = SQL_UTILS.getColumnNameFromField(FIELD);
 
 			// get the value
-			final Object VALUE = super.getSQLValue(COLUMN_NAME, resultSet, clazz);
+			final Object VALUE = super.getSQLValue(COLUMN_NAME, RESULT_SET, CLAZZ);
 
 			// get the class that represents the table
-			final Class<?> RELATIONSHIP = field.getType();
+			final Class<?> RELATIONSHIP = FIELD.getType();
 
 			// get the name of the primary key
-			final String PK_NAME = SQLClassHelper.getPrimaryKey(RELATIONSHIP).getAnnotation(SQLIdentifier.class).identifierName();
+			final String PK_NAME = SQLClassHelper.getPrimaryKey(RELATIONSHIP).getAnnotation(SQLIdentifier.class)
+					.identifierName();
 
 			// creates a where condition to find the value of relationship
-			SQLWhereCondition where = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
+			final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
 
 			// calls it recursively
-			Object value = getSQLColumnValue(RELATIONSHIP, where, showSql );
+			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, SHOW_SQL);
 
 			ObjectAccessUtils.callSetter(object, FIELD_NAME, value);
 
 		} else {
 			// if the field is just a normal column
-			final String COLUMN_NAME = sqlUtils.getColumnNameFromField(field);
+			final String COLUMN_NAME = SQL_UTILS.getColumnNameFromField(FIELD);
 
-			final Object COLUMN_VALUE = super.getSQLValue(COLUMN_NAME, resultSet, field.getType());
+			final Object COLUMN_VALUE = super.getSQLValue(COLUMN_NAME, RESULT_SET, FIELD.getType());
 
 			ObjectAccessUtils.callSetter(object, FIELD_NAME, COLUMN_VALUE);
 		}
 
 	}
- 	
-	private <E> void setPrimaryKeyValue(E object, Class<?> clazz, ResultSet resultSet, Field primaryKey) throws SQLException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		if (clazz.isAnnotationPresent(SQLInheritancePK.class)) {
-			Object value = super.getSQLValue(clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName(),resultSet, primaryKey.getType());
-			ObjectAccessUtils.<E>callSetter(object, primaryKey.getName(), value);
+
+	private <E> void setPrimaryKeyValue(E object, final Class<?> CLAZZ, final ResultSet RESULT_SET,
+			final Field PRIMARY_KEY) throws SQLException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, IntrospectionException {
+		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
+			final Object VALUE = super.getSQLValue(CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(),
+					RESULT_SET, PRIMARY_KEY.getType());
+			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		} else {
-			Object value = super.getSQLValue(sqlUtils.getColumnNameFromField(primaryKey), resultSet, primaryKey.getType());
-			ObjectAccessUtils.<E>callSetter(object, primaryKey.getName(), value);
+			final Object VALUE = super.getSQLValue(SQL_UTILS.getColumnNameFromField(PRIMARY_KEY), RESULT_SET,
+					PRIMARY_KEY.getType());
+			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		}
 	}
-	
-	
 
 	public static void main(String[] args) throws Exception {
 
-		JDBCConnection co = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
-		List<SQLWhereCondition> cod = new ArrayList<>();
-		cod.add(new SQLWhereCondition("NOTA", 10, SQLConditionType.GREATER_THAN_OR_EQUAL));
-		cod.add(new SQLWhereCondition("Departamento_ID", 3, SQLConditionType.EQUAL));
-		List<Matheus> ll = co.selectFrom(Matheus.class, cod ,true);
-		ll.forEach(x -> {
-			System.out.println("Ma");
-			System.out.println("ID:" + x.getId());
-			System.out.println("Nome: " +x.getNome());
-			System.out.println("Nota:" + x.getNota());
-			System.out.println();
-			System.out.println("DE");
-			System.out.println("ID:" + x.getDepartamento().getId());
-			System.out.println("Nome:" + x.getDepartamento().getNome());
-			System.out.println("Sigla: " + x.getDepartamento().getSigla());
-			System.out.println();
-			System.out.println("LI");
-			System.out.println("Lider Nome: " + x.getDepartamento().getLider().getNome());
-			System.out.println("ID: " + x.getDepartamento().getLider().getId());
-			System.out.println("\n");
-		});
+		
+		
+
+		SQLJdbc jdbc = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
+		Field[] a = { Matheus.class.getDeclaredField("departamento"), Aluno.class.getDeclaredField("nota") };
+		List<Matheus> obj = jdbc.selectFrom(Matheus.class,  true);
+		System.out.println(obj.size());
 		
 		
 	}
 
 }
-
-
-
-
-
-
-
-

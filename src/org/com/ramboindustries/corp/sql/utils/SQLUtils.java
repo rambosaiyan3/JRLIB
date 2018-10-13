@@ -5,7 +5,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.math.BigDecimal;
 import java.sql.PreparedStatement;
-import java.sql.ResultSet;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -294,41 +293,52 @@ public final class SQLUtils {
 		fields.add(0, primaryKey);
 	}
 
-	public <E> String createSQLSelectScript(final Class<E> clazz) {
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(clazz) + ";";
+	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
+		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + ";";
 	}
 
-	public String createSQLSelectScript(final Class<?> clazz, final SQLWhereCondition where) {
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(clazz) + SQLDataManipulation.WHERE
-				+ where.getFieldName() + where.getConditionType().getType() + where.getFieldValue() + ";";
+	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field [] COLUMNS) {
+		StringBuilder fields = new StringBuilder(" ");
+		for(Field field : COLUMNS) {
+			fields.append(this.getColumnNameFromField(field) + ", ");
+		}
+		fields.delete(fields.lastIndexOf(","), fields.length());
+		return SQLDataManipulation.SELECT + fields.toString() + SQLDataManipulation.FROM  + this.getTableName(CLAZZ) + ";";
+	}
+	
+	public String createSQLSelectScript(final Class<?> CLAZZ, final SQLWhereCondition WHERE) {
+		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + SQLDataManipulation.WHERE
+				+ WHERE.getFieldName() + WHERE.getConditionType().getType() + WHERE.getFieldValue() + ";";
 	}
 
-	public String createSQLSelectScript(final Class<?> clazz, final List<SQLWhereCondition> where) {
+	public String createSQLSelectScript(final Class<?> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		StringBuilder conditions = new StringBuilder();
-		where.forEach(x -> {
+		WHERE.forEach(x -> {
 			conditions.append(SQLDataManipulation.AND);
 			conditions.append(x.getFieldName() + x.getConditionType().getType() + x.getFieldValue());
 		});
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(clazz) + SQLDataManipulation.WHERE_TRUE
+		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + SQLDataManipulation.WHERE_TRUE
 				+ conditions.toString() + ";";
 	}
 	
-	public String getColumnNameFromField(Field field) {
-		if (field.isAnnotationPresent(SQLIdentifier.class))
-			return field.getAnnotation(SQLIdentifier.class).identifierName();
-		else if (field.isAnnotationPresent(SQLColumn.class))
-			return field.getAnnotation(SQLColumn.class).name();
-		else if (field.isAnnotationPresent(SQLForeignKey.class))
-			return field.getAnnotation(SQLForeignKey.class).name();
+	public String getColumnNameFromField(final Field FIELD) {
+		if (FIELD.isAnnotationPresent(SQLIdentifier.class))
+			return FIELD.getAnnotation(SQLIdentifier.class).identifierName();
+		else if (FIELD.isAnnotationPresent(SQLColumn.class))
+			return FIELD.getAnnotation(SQLColumn.class).name();
+		else if (FIELD.isAnnotationPresent(SQLForeignKey.class))
+			return FIELD.getAnnotation(SQLForeignKey.class).name();
 		else
-			return field.getName();
+			return FIELD.getName();
 	}
 
-	public boolean isFieldRelationship(Field field) {
-		return field.isAnnotationPresent(SQLForeignKey.class);
+	public boolean isFieldRelationship(final Field FIELD) {
+		return FIELD.isAnnotationPresent(SQLForeignKey.class);
 	}
 	
-	
+	final public void SQL_LOGGER(final String SCRIPT) {
+		System.out.println(" -| -| -|  INIT SQL EXECUTION > > > " + SCRIPT + " < < < END SQL EXECUTION |- |- |- ");
+	}
 
 	
 	

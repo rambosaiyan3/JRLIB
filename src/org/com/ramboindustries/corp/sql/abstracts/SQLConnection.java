@@ -6,6 +6,7 @@ import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 import org.com.ramboindustries.corp.sql.SQLClassHelper;
 import org.com.ramboindustries.corp.text.Type;
@@ -32,8 +33,7 @@ public abstract class SQLConnection implements SQLJdbc {
 
 	@Override
 	public void closeAll() throws SQLException {
-		// TODO Auto-generated method stub
-		
+		if(connection != null) connection.close();
 	}
 
 	@Override
@@ -109,4 +109,8 @@ public abstract class SQLConnection implements SQLJdbc {
 			return null;
 		}
 	}
+	
+	public abstract <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL)  throws SQLException;
+	
+	
 }

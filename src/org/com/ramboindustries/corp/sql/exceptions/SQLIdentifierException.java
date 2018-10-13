@@ -1,10 +1,11 @@
 package org.com.ramboindustries.corp.sql.exceptions;
 
+import java.sql.SQLException;
 import java.util.List;
 
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 
-public class SQLIdentifierException extends Exception{
+public class SQLIdentifierException extends SQLException{
 
 
 	private static final long serialVersionUID = -7136599636089999198L;

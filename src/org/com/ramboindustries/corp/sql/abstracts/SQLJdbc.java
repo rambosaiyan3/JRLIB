@@ -3,6 +3,7 @@ package org.com.ramboindustries.corp.sql.abstracts;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
+import java.util.List;
 
 public interface SQLJdbc {
 
@@ -21,4 +22,7 @@ public interface SQLJdbc {
 	public void executeSQL(final String SQL) throws SQLException;
 
 	public void executeSQL(PreparedStatement preparedStatement) throws SQLException;
+	
+	public  <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL)  throws SQLException;
+
 }
