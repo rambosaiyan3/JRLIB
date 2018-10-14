@@ -72,11 +72,11 @@ public class SQLClassHelper {
 	 * @param clazz that we want to know its PK
 	 * @return
 	 */
-	public static Field getPrimaryKey(Class<?> clazz) {
-		Field[] fields = clazz.getDeclaredFields();
-		for (Field field : fields) {
-			if (field.isAnnotationPresent(SQLIdentifier.class)) {
-				return field;
+	public static Field getPrimaryKey(final Class<?> CLAZZ) {
+		final Field[] FIELDS = CLAZZ.getDeclaredFields();
+		for (Field FIELD : FIELDS) {
+			if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
+				return FIELD;
 			}
 		}
 		return null;
@@ -85,6 +85,10 @@ public class SQLClassHelper {
 	@SuppressWarnings("unchecked")
 	public static <E, V> V getPrimaryKeyValue(E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		if(object == null){
+			return null;
+		}
+		
 		Field field = getPrimaryKey(object.getClass());
 		// if the class does not have an PK
 		if (field == null) {

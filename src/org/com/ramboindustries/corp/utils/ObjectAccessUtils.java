@@ -18,6 +18,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
+import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 
 /**
@@ -124,16 +125,19 @@ public class ObjectAccessUtils {
 	private static <E> SQLJavaField createSqlJavaField(Field field, E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		SQLJavaField sqlJavaField = new SQLJavaField();
-	
-		// set the field to access its value
-		field.setAccessible(true);
+
 
 		if (field.isAnnotationPresent(SQLColumn.class)) {
 			// if the field its a normal column
 			sqlJavaField.setSqlColumn(field.getAnnotation(SQLColumn.class).name());
 		} else if(field.isAnnotationPresent(SQLIdentifier.class)){
 			// if the field is a PK
-			sqlJavaField.setSqlColumn(field.getAnnotation(SQLIdentifier.class).identifierName());
+			if (object.getClass().isAnnotationPresent(SQLInheritancePK.class)) {
+				// if the column has the name of PK defined on class
+				sqlJavaField.setSqlColumn(object.getClass().getAnnotation(SQLInheritancePK.class).primaryKeyName());
+			} else {
+				sqlJavaField.setSqlColumn(field.getAnnotation(SQLIdentifier.class).identifierName());
+			}
 		}else if(field.isAnnotationPresent(SQLForeignKey.class)) {
 			// if the field is a FK
 			sqlJavaField.setSqlColumn(field.getAnnotation(SQLForeignKey.class).name());
@@ -152,7 +156,7 @@ public class ObjectAccessUtils {
 			sqlJavaField.setValue(ObjectAccessUtils.<E>callGetter(field.getName(), object));
 		}
 		
-		field.setAccessible(false);
+
 		return sqlJavaField;
 	}
 	
@@ -184,15 +188,6 @@ public class ObjectAccessUtils {
 		return allFields;
 	}
 	
-	
-	public static String getFieldsName(final Field [] fields) {
-		StringBuilder x = new StringBuilder();
-		for(Field field : fields) {
-			x.append(field.getName() + ", ");
-		}	
-		return x.delete(x.lastIndexOf("x"), x.length()).toString();
-	}
-	
 	public static <E> E initObject(Class<E> clazz) throws InstantiationException, IllegalAccessException {
 		return clazz.newInstance();
 	}
@@ -208,6 +203,9 @@ public class ObjectAccessUtils {
 			return field.getName();
 		}
 	}
+	
+		
+	
 	
 }
 

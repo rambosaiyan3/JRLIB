@@ -1,32 +1,28 @@
 package org.com.ramboindustries.corp.sql.utils;
 
-import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
-import java.math.BigDecimal;
-import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLClassHelper;
-import org.com.ramboindustries.corp.sql.SQLConstants;
-import org.com.ramboindustries.corp.sql.SQLInsert;
 import org.com.ramboindustries.corp.sql.SQLJavaField;
-import org.com.ramboindustries.corp.sql.SQLUpdate;
 import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
-import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.text.Type;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -34,120 +30,55 @@ import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
  */
 public final class SQLUtils {
 
-	private Object setValue(Object value) {
-		if (value instanceof String || value instanceof java.util.Date)
-			return "'" + value + "'";
+	private String convertToString(Object value) {
+		if (value == null)
+			return null;
+		else if (value instanceof String || value instanceof java.util.Date)
+			return "'" + value.toString() + "'";
 		else
-			return value;
+			return value.toString();
 	}
 
-	private SQLInsert makeInsertScript(Set<SQLJavaField> sqlJavaField) {
-		SQLInsert sqlColumnValue = new SQLInsert();
-		StringBuilder fields = new StringBuilder();
-		StringBuilder values = new StringBuilder();
-		sqlJavaField.forEach(sql -> {
-			fields.append("" + sql.getSqlColumn() + ",");
-			values.append("" + setValue(sql.getValue()) + ",");
+	protected Map<String, String> createInsert(final Set<SQLJavaField> SQL_JAVA) {
+		Map<String, String> map = new HashMap<>();
+		SQL_JAVA.forEach(item -> {
+			map.put(item.getSqlColumn(), this.convertToString(item.getValue()));
 		});
-		sqlColumnValue.setColumns(fields.toString());
-		sqlColumnValue.setValues(values.toString());
-		return sqlColumnValue;
+		return map;
 	}
 
-	private SQLUpdate makeUpdateScript(Set<SQLJavaField> sqlJavaFields, List<SQLWhereCondition> whereConditions) {
-		SQLUpdate sqlUpdate = new SQLUpdate();
-		StringBuilder update = new StringBuilder();
-		StringBuilder where = new StringBuilder(" WHERE 1 = 1 ");
-		sqlJavaFields.forEach(x -> {
-			update.append("" + x.getSqlColumn() + SQLConstants.EQUAL + setValue(x.getValue()) + ",");
+	protected String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
+		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + WHERE_CONDITION.getConditionType().getType()
+				+ WHERE_CONDITION.getFieldValue();
+	}
+
+	protected String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
+		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
+		WHERE_CONDITION.forEach(WHERE -> {
+			builder.append(
+					WHERE.getFieldName() + WHERE.getConditionType() + WHERE.getFieldValue() + SQLDataManipulation.AND);
 		});
-		whereConditions.forEach(x -> {
-			where.append(SQLConstants.AND + x.getFieldName() + x.getConditionType().getType() + x.getFieldValue());
-		});
-		sqlUpdate.setUpdateScript(update.delete(update.length() - 1, update.length()).toString());
-		sqlUpdate.setWhereCondition(where.toString());
-		return sqlUpdate;
+		return builder.toString();
 	}
 
-	private SQLUpdate makeUpdateScript(Set<SQLJavaField> sqlJavaFields, SQLWhereCondition whereCondition) {
-		SQLUpdate sqlUpdate = new SQLUpdate();
-		StringBuilder update = new StringBuilder();
-		StringBuilder where = new StringBuilder(SQLConstants.WHERE);
-		sqlJavaFields.forEach(x -> {
-			update.append("" + x.getSqlColumn() + SQLConstants.EQUAL + x.getValue() + ",");
-		});
-		sqlUpdate.setUpdateScript(update.delete(update.length() - 1, update.length()).toString());
-		where.append(whereCondition.getFieldName() + " " + whereCondition.getConditionType().getType() + " "
-				+ whereCondition.getFieldValue());
-		sqlUpdate.setWhereCondition(where.toString());
-		return sqlUpdate;
+	protected String createFieldsToSelect(final Field[] COLUMNS) {
+		StringBuilder builder = new StringBuilder(" ");
+		for (final Field FIELD : COLUMNS) {
+			builder.append(this.getColumnNameFromField(FIELD) + ", ");
+		}
+		builder.delete(builder.lastIndexOf(","), builder.length());
+		return builder.toString();
 	}
 
-	private <E> String getTableName(E object) {
-		if (object.getClass().isAnnotationPresent(SQLTable.class))
-			return object.getClass().getAnnotation(SQLTable.class).table();
-		else
-			return object.getClass().getSimpleName();
-	}
-
-	public String getTableName(Class<?> clazz) {
+	/**
+	 * Gets the name of the table on DB
+	 * 
+	 * @param clazz that represents the table
+	 * @return table name
+	 */
+	protected String getTableName(Class<?> clazz) {
 		return clazz.isAnnotationPresent(SQLTable.class) ? clazz.getAnnotation(SQLTable.class).table()
 				: clazz.getSimpleName();
-	}
-
-	public <E> String createInsertScriptSQL(E object)
-			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Set<SQLJavaField> sqlJavaField = ObjectAccessUtils.<E>getAllFieldFromClassAndSuperClass(object, false);
-		SQLInsert sqlColumnValues = makeInsertScript(sqlJavaField);
-		return SQLConstants.insertSQL(getTableName(object), sqlColumnValues.getColumns(), sqlColumnValues.getValues());
-	}
-
-	public <E> String createUpdateScriptSQL(E object, List<SQLWhereCondition> whereConditions)
-			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		String sql = null;
-		Set<SQLJavaField> sqlJavaFields = ObjectAccessUtils.<E>getAllFieldFromClassAndSuperClass(object, false);
-		SQLUpdate sqlUpdate = makeUpdateScript(sqlJavaFields, whereConditions);
-		sql = SQLConstants.UPDATE + getTableName(object) + SQLConstants.SET + sqlUpdate.getUpdateScript()
-				+ sqlUpdate.getWhereCondition();
-		return sql;
-	}
-
-	public <E> String createUpdateScriptSQL(E object, SQLWhereCondition whereCondition)
-			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Set<SQLJavaField> sqlJavaFields = ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false);
-		SQLUpdate sqlUpdate = makeUpdateScript(sqlJavaFields, whereCondition);
-		return SQLConstants.updateSQL(getTableName(object), sqlUpdate.getUpdateScript(), sqlUpdate.getWhereCondition());
-	}
-
-	public static void setParametersPreparedStatement(PreparedStatement preparedStatement,
-			Map<Integer, Object> parameters) {
-		parameters.forEach((key, value) -> {
-			try {
-				if (value instanceof java.util.Date || value instanceof String) {
-					preparedStatement.setString(key, (String) value);
-				} else if (value instanceof Number) {
-					if (value instanceof Integer) {
-						preparedStatement.setInt(key, (Integer) value);
-					} else if (value instanceof BigDecimal) {
-						preparedStatement.setBigDecimal(key, (BigDecimal) value);
-					} else if (value instanceof Long) {
-						preparedStatement.setLong(key, (Long) value);
-					} else if (value instanceof Short) {
-						preparedStatement.setShort(key, (Short) value);
-					} else if (value instanceof Float) {
-						preparedStatement.setFloat(key, (Float) value);
-					} else if (value instanceof Double) {
-						preparedStatement.setDouble(key, (Double) value);
-					} else {
-						preparedStatement.setByte(key, (Byte) value);
-					}
-				} else if (value instanceof Boolean) {
-					preparedStatement.setBoolean(key, (Boolean) value);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		});
 	}
 
 	/**
@@ -157,7 +88,7 @@ public final class SQLUtils {
 	 * @param field      the field that is the primary key
 	 * @return a String that contains the line
 	 */
-	private String createPrimaryKeyConstraint(String constraint, Field field, Class<?> clazz) {
+	protected String createPrimaryKeyConstraint(String constraint, Field field, Class<?> clazz) {
 		String name = null;
 		if (clazz.isAnnotationPresent(SQLInheritancePK.class))
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
@@ -174,68 +105,12 @@ public final class SQLUtils {
 	 * @param clazzReferenced class that has the primary key
 	 * @return a String that contains the line
 	 */
-	private String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
+	protected String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
 		String fieldReferenced = SQLClassHelper.getPrimaryKey(clazzReferenced).getAnnotation(SQLIdentifier.class)
 				.identifierName();
 		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.FOREIGN_KEY + "("
 				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinition.REFERENCES
 				+ getTableName(clazzReferenced) + "(" + fieldReferenced + ")";
-	}
-
-	/**
-	 * Creates a dinamic SQL Table as a class argument
-	 * 
-	 * @param clazz
-	 * @return
-	 * @throws SQLIdentifierException
-	 */
-	public String createTableScript(Class<?> clazz) throws SQLIdentifierException {
-		List<Field> fields = this.allFieldsToTable(clazz);
-		StringBuilder sql = new StringBuilder();
-
-		sql.append(SQLDataDefinition.CREATE_TABLE + getTableName(clazz) + " (\n");
-
-		// the first element will always be the 1
-		Field primaryKey = fields.get(0);
-
-		// we remove him to avoid problems
-		fields.remove(0);
-
-		// if the clazz has the SQLInheritancePK it will get the name
-		sql.append(SQLClassHelper.attributeToSQLColumn(primaryKey, clazz));
-		sql.append(",\n");
-
-		// list that will have the foreign key constraints
-		List<String> foreignConstraints = new ArrayList<>();
-
-		for (Field field : fields) {
-			if (!field.isAnnotationPresent(SQLIgnore.class)) {
-
-				// that has an object that represents another table
-				if (field.isAnnotationPresent(SQLForeignKey.class)) {
-					// we create and add a constraint line to it
-					foreignConstraints.add(createForeignKeyConstraint(
-							("FK_" + getTableName(clazz) + "_" + getTableName(field.getType())), field,
-							field.getType()));
-				}
-				// creates a sql line
-				sql.append(SQLClassHelper.attributeToSQLColumn(field));
-				sql.append(",\n");
-			}
-		}
-
-		if (primaryKey != null) {
-			sql.append(createPrimaryKeyConstraint("PK_" + getTableName(clazz), primaryKey, clazz));
-			sql.append(",\n");
-		}
-
-		foreignConstraints.forEach(constraint -> {
-			sql.append(constraint);
-			sql.append(",\n");
-		});
-
-		int last = sql.toString().lastIndexOf(",");
-		return sql.delete(last, sql.length()) + ");";
 	}
 
 	public List<Field> allFieldsToTable(Class<?> clazz) throws SQLIdentifierException {
@@ -293,34 +168,6 @@ public final class SQLUtils {
 		fields.add(0, primaryKey);
 	}
 
-	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + ";";
-	}
-
-	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field [] COLUMNS) {
-		StringBuilder fields = new StringBuilder(" ");
-		for(Field field : COLUMNS) {
-			fields.append(this.getColumnNameFromField(field) + ", ");
-		}
-		fields.delete(fields.lastIndexOf(","), fields.length());
-		return SQLDataManipulation.SELECT + fields.toString() + SQLDataManipulation.FROM  + this.getTableName(CLAZZ) + ";";
-	}
-	
-	public String createSQLSelectScript(final Class<?> CLAZZ, final SQLWhereCondition WHERE) {
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + SQLDataManipulation.WHERE
-				+ WHERE.getFieldName() + WHERE.getConditionType().getType() + WHERE.getFieldValue() + ";";
-	}
-
-	public String createSQLSelectScript(final Class<?> CLAZZ, final List<SQLWhereCondition> WHERE) {
-		StringBuilder conditions = new StringBuilder();
-		WHERE.forEach(x -> {
-			conditions.append(SQLDataManipulation.AND);
-			conditions.append(x.getFieldName() + x.getConditionType().getType() + x.getFieldValue());
-		});
-		return SQLDataManipulation.SELECT_FROM + this.getTableName(CLAZZ) + SQLDataManipulation.WHERE_TRUE
-				+ conditions.toString() + ";";
-	}
-	
 	public String getColumnNameFromField(final Field FIELD) {
 		if (FIELD.isAnnotationPresent(SQLIdentifier.class))
 			return FIELD.getAnnotation(SQLIdentifier.class).identifierName();
@@ -335,11 +182,68 @@ public final class SQLUtils {
 	public boolean isFieldRelationship(final Field FIELD) {
 		return FIELD.isAnnotationPresent(SQLForeignKey.class);
 	}
-	
-	final public void SQL_LOGGER(final String SCRIPT) {
-		System.out.println(" -| -| -|  INIT SQL EXECUTION > > > " + SCRIPT + " < < < END SQL EXECUTION |- |- |- ");
+
+	/**
+	 * Returns the value of the SQLColumn
+	 * 
+	 * @param name      column name
+	 * @param resultSet
+	 * @param clazz     type of object that will be converted
+	 * @return
+	 * @throws SQLException
+	 */
+	public Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
+		Type type = Type.getTypeByName(clazz.getSimpleName());
+		if (type == null) {
+			Field field = SQLClassHelper.getPrimaryKey(clazz);
+			type = Type.getTypeByName(field.getType().getSimpleName());
+			clazz = field.getType();
+		}
+
+		switch (type) {
+		case BYTE:
+			return clazz.cast(resultSet.getByte(name));
+		case SHORT:
+			return clazz.cast(resultSet.getShort(name));
+		case INTEGER:
+			return clazz.cast(resultSet.getInt(name));
+		case LONG:
+			return clazz.cast(resultSet.getLong(name));
+		case FLOAT:
+			return clazz.cast(resultSet.getFloat(name));
+		case DOUBLE:
+			return clazz.cast(resultSet.getDouble(name));
+		case BIG_DECIMAL:
+			return clazz.cast(resultSet.getBigDecimal(name));
+		case BOOLEAN:
+			return clazz.cast(resultSet.getBoolean(name));
+		case STRING:
+			return clazz.cast(resultSet.getString(name));
+		default:
+			return null;
+		}
 	}
 
-	
-	
+	/**
+	 * Gets the name of a Primary Key
+	 * @param CLAZZ that represents the table
+	 * @return the name of Primary Key
+	 * @throws SQLIdentifierException if we do not find a primary key
+	 */
+	protected String getPrimaryKeyName(final Class<?> CLAZZ) throws SQLIdentifierException {
+		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
+			return CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName();
+		}
+		Field field = SQLClassHelper.getPrimaryKey(CLAZZ);
+		if (field == null) {
+			if (CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
+				return getPrimaryKeyName(CLAZZ.getSuperclass());
+			} else {
+				throw new SQLIdentifierException("A " + SQLIdentifier.class.getSimpleName() + " was not found!");
+			}
+		}
+		return this.getColumnNameFromField(field);
+
+	}
+
 }
