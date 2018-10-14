@@ -79,6 +79,9 @@ public class SQLClassHelper {
 				return FIELD;
 			}
 		}
+		if(CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
+			return SQLClassHelper.getPrimaryKey(CLAZZ.getSuperclass());
+		}
 		return null;
 	}
 

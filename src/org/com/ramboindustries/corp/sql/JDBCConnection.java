@@ -79,19 +79,18 @@ public final class JDBCConnection implements SQLJdbc{
 	
 	@Override
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
-		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
-	
-		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-		RESULT_SET.next();
-		
-		if(SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
-		}
-		
 		try {
+			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
+			final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+
+			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			if (SHOW_SQL) {
+				SQL_LOGGER.showScript(SCRIPT);
+			}
+			RESULT_SET.next();
 			return this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
+				| IntrospectionException e) {
 			e.printStackTrace();
 		}
 
@@ -229,13 +228,28 @@ public final class JDBCConnection implements SQLJdbc{
 		return objects;
 	}
 	
-	public <E> E persistObject(E object) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException {
+	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException {
 		
-		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(object);
-		
+		final Class<E> CLAZZ = (Class<E>)OBJECT.getClass();
+		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(OBJECT);
 		this.executeSQL(SCRIPT);
+		final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(CLAZZ);
+	
+		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
+		final ResultSet RESULT_SET = this.executeSQLSelect(MAX_ID);
 		
-		return null;
+		Long maxID = null;
+		if(RESULT_SET.next()) {
+		maxID = RESULT_SET.getLong(1);
+		}
+		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
+		
+		if(SHOW_SQL) {
+			SQL_LOGGER.showScript(SCRIPT);
+			SQL_LOGGER.showScript(MAX_ID);
+		}
+		
+		return this.<E>findOne(CLAZZ, WHERE, true);
 	}
 	
 	
@@ -377,18 +391,31 @@ public final class JDBCConnection implements SQLJdbc{
 	public static void main(String[] args) throws Exception {
 
 		JDBCConnection jdbc = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
+
+		Pessoa pessoa1 = new Pessoa();
+		pessoa1.setNome("Teste Cadastro");
+		pessoa1 = jdbc.persistObject(pessoa1, true);
 		
-		SQLWhereCondition where = new SQLWhereCondition("DEPARTAMENTO_ID", 5, SQLConditionType.EQUAL);
-		Departamento departamento = jdbc.<Departamento>findOne(Departamento.class, where, true);
-	//	jdbc.selectFrom(Departamento.class, false);
+		Pessoa pessoa2 = new Pessoa();
+		pessoa2.setNome("Teste 2");
+		pessoa2 = jdbc.persistObject(pessoa2, true);
 		
-		Matheus matheus = new Matheus();
-		matheus.setNome("Matheus Felipe Rambo");
-		matheus.setNota(250060.0);
-		matheus.setDepartamento(departamento);
-	
-//		jdbc.<Matheus>persistObject(matheus);
-	
+		Departamento departamento = new Departamento();
+		departamento.setLider(pessoa1);
+		departamento.setNome("Testezinho");
+		departamento.setSigla("TT");
+		departamento = jdbc.persistObject(departamento, true);
+		
+		Matheus ma = new Matheus();
+		ma.setDepartamento(departamento);
+		ma.setNome("kk");
+		ma.setNota(12.6);
+		ma = jdbc.persistObject(ma, true);
+		
+		System.out.println(ma.getId());
+		System.out.println(ma.getDepartamento().getId());
+		System.out.println(ma.getDepartamento().getLider().getId());
+		
 
 	
 		

@@ -230,7 +230,7 @@ public final class SQLUtils {
 	 * @return the name of Primary Key
 	 * @throws SQLIdentifierException if we do not find a primary key
 	 */
-	protected String getPrimaryKeyName(final Class<?> CLAZZ) throws SQLIdentifierException {
+	public String getPrimaryKeyName(final Class<?> CLAZZ) throws SQLIdentifierException {
 		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
 			return CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		}
