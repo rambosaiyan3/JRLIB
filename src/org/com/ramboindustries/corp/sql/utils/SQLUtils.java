@@ -26,6 +26,7 @@ import org.com.ramboindustries.corp.text.Type;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
+ * Utility to work with SQL
  * @author kernelpanic_r
  */
 public final class SQLUtils {

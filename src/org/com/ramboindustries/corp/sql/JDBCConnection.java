@@ -7,23 +7,29 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.ResultSet;
 import java.sql.SQLException;
-import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
+import org.com.ramboindustries.corp.exceptions.JRUnexpectedException;
 import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
-import org.com.ramboindustries.corp.test.Departamento;
-import org.com.ramboindustries.corp.test.Matheus;
-import org.com.ramboindustries.corp.test.Pessoa;
+import org.com.ramboindustries.corp.test.Escola;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
-public final class JDBCConnection implements SQLJdbc{
+
+
+/**
+ * 
+ * @author kernelpanic_r
+ *
+ */
+public final class JDBCConnection implements SQLJdbc {
 
 	private final String URL;
 	private final String USER;
@@ -32,8 +38,7 @@ public final class JDBCConnection implements SQLJdbc{
 	private Connection connection;
 
 	private final SQLLogger SQL_LOGGER = new SQLLogger();
-	
-	
+
 	public JDBCConnection(String URL, String USER, String PASS) {
 		this.URL = URL;
 		this.USER = USER;
@@ -47,10 +52,10 @@ public final class JDBCConnection implements SQLJdbc{
 		connection = DriverManager.getConnection(URL, USER, PASS);
 	}
 
-
 	@Override
 	public void closeAll() throws SQLException {
-		if(connection != null) connection.close();
+		if (connection != null)
+			connection.close();
 	}
 
 	@Override
@@ -65,44 +70,57 @@ public final class JDBCConnection implements SQLJdbc{
 
 	@Override
 	public ResultSet executeSQLSelect(final String SQL) throws SQLException {
-		if(connection == null) 
+		if (connection == null)
 			this.openConnection();
 		return connection.prepareStatement(SQL).executeQuery();
 	}
 
 	@Override
 	public void executeSQL(final String SQL) throws SQLException {
-		if(connection == null)
+		if (connection == null)
 			this.openConnection();
 		connection.prepareStatement(SQL).executeUpdate();
 	}
-	
+
 	@Override
-	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException {
-		try {
+	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
+			throws SQLException, JRUnexpectedException {
+					
+			// Creates the SQL Script
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
+		try {	
+
+			// Gets all the fields from class
 			final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
+			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-			if (SHOW_SQL) {
-				SQL_LOGGER.showScript(SCRIPT);
-			}
-			RESULT_SET.next();
-			return this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-		} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException
-				| IntrospectionException e) {
-			e.printStackTrace();
-		}
 
-		return null;
+			// shows the SQL script
+			if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+
+			RESULT_SET.next();
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			if (result == null) {
+				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			}
+			return result;
+		} catch (SQLNotFoundException | SQLIdentifierException e) {
+			throw e;
+		} catch (SQLException e) {
+			SQL_LOGGER.showException(SCRIPT);
+			throw new SQLException(e);
+		} catch (Exception e) {
+			throw new JRUnexpectedException(e.getMessage());
+		}
 	}
-	
+
 	/**
 	 * Simple SELECT * FROM TABLE
 	 * 
 	 * @param clazz that represents the table
 	 * @return an array list with all the objects and it's relationships
-	 * @throws SQLException 
+	 * @throws SQLException
 	 */
 	@Override
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
@@ -120,7 +138,8 @@ public final class JDBCConnection implements SQLJdbc{
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | IntrospectionException e) {
 				e.printStackTrace();
 			}
 		}
@@ -134,15 +153,15 @@ public final class JDBCConnection implements SQLJdbc{
 	 * @param clazz             that represents the table
 	 * @param sqlWhereCondition the condidion
 	 * @return an array list
-	 * @throws SQLException 
+	 * @throws SQLException
 	 * @throws Exception
 	 */
-	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION,
-			final boolean SHOW_SQL) throws SQLException {
+	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
+			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 
 		if (SHOW_SQL) {
-		//	SQL_UTILS.SQL_LOGGER(SCRIPT);
+			// SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
 
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
@@ -153,7 +172,8 @@ public final class JDBCConnection implements SQLJdbc{
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | IntrospectionException e) {
 				e.printStackTrace();
 				throw new SQLException(e);
 			}
@@ -167,7 +187,7 @@ public final class JDBCConnection implements SQLJdbc{
 
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
 		if (SHOW_SQL) {
-		//	SQL_UTILS.SQL_LOGGER(SCRIPT);
+			// SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
@@ -177,7 +197,8 @@ public final class JDBCConnection implements SQLJdbc{
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | IntrospectionException e) {
+			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
+					| InvocationTargetException | IntrospectionException e) {
 				e.printStackTrace();
 				throw new SQLException(e);
 			}
@@ -186,7 +207,8 @@ public final class JDBCConnection implements SQLJdbc{
 		return objects;
 	}
 
-	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL) throws SQLException {
+	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL)
+			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS);
 
 		if (SHOW_SQL) {
@@ -199,63 +221,66 @@ public final class JDBCConnection implements SQLJdbc{
 			final byte LENGTH = (byte) COLUMNS.length;
 			final Object[] OBJECT = new Object[LENGTH];
 			for (byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET,
-						COLUMNS[i].getType());
+				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(
+						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
 		}
 		return objects;
 	}
 
-	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field [] COLUMNS, SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException{
+	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, SQLWhereCondition WHERE_CONDITION,
+			final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS, WHERE_CONDITION);
-		
-		if(SHOW_SQL) {
-		//	SQL_UTILS.SQL_LOGGER(SCRIPT);
+
+		if (SHOW_SQL) {
+			SQL_LOGGER.showScript(SCRIPT);
 		}
-		
+
 		List<Object[]> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-		
-		while(RESULT_SET.next()) {
+
+		while (RESULT_SET.next()) {
 			final byte LENGTH = (byte) COLUMNS.length;
 			final Object[] OBJECT = new Object[LENGTH];
-			for(byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET,	COLUMNS[i].getType());
+			for (byte i = 0; i < LENGTH; i++) {
+				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(
+						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
-		}	
+		}
 		return objects;
 	}
-	
-	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException {
-		
-		final Class<E> CLAZZ = (Class<E>)OBJECT.getClass();
+
+	@SuppressWarnings("unchecked")
+	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws IllegalAccessException,
+			IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException, JRUnexpectedException {
+
+		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(OBJECT);
 		this.executeSQL(SCRIPT);
 		final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(CLAZZ);
-	
+
 		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
 		final ResultSet RESULT_SET = this.executeSQLSelect(MAX_ID);
-		
+
 		Long maxID = null;
-		if(RESULT_SET.next()) {
-		maxID = RESULT_SET.getLong(1);
+		if (RESULT_SET.next()) {
+			maxID = RESULT_SET.getLong(1);
 		}
 		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
-		
-		if(SHOW_SQL) {
+
+		if (SHOW_SQL) {
 			SQL_LOGGER.showScript(SCRIPT);
 			SQL_LOGGER.showScript(MAX_ID);
 		}
-		
+
 		return this.<E>findOne(CLAZZ, WHERE, true);
 	}
-	
-	
-	
+
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
-			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, SQLException, IntrospectionException {
+			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
+			InvocationTargetException, SQLException, IntrospectionException {
 
 		// create and initialize the object
 		E object = ObjectAccessUtils.<E>initObject(CLAZZ);
@@ -277,15 +302,18 @@ public final class JDBCConnection implements SQLJdbc{
 
 				// the column of the actual table
 				final String COLUMN_RELATIONSHIP = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELDS.get(i));
-				
+
 				// the column that is the name of the Foreign Key
-				final String COLUMN_FOREIGN = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(SQLClassHelper.getPrimaryKey(FIELDS.get(i).getType()));
-				
+				final String COLUMN_FOREIGN = SQL_SCRIPTS.getSQLUtils()
+						.getColumnNameFromField(SQLClassHelper.getPrimaryKey(FIELDS.get(i).getType()));
+
 				// gets the value of the actual table
-				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET, FIELDS.get(i).getType());
+				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET,
+						FIELDS.get(i).getType());
 
 				// creates a where condition
-				final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,SQLConditionType.EQUAL);
+				final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,
+						SQLConditionType.EQUAL);
 				final Object VALUE = this.getSQLColumnValue(FIELDS.get(i).getType(), WHERE_CONDITION, SHOW_SQL);
 
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, VALUE);
@@ -295,7 +323,8 @@ public final class JDBCConnection implements SQLJdbc{
 
 				final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELDS.get(i));
 
-				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET, FIELDS.get(i).getType());
+				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET,
+						FIELDS.get(i).getType());
 
 				// calls the object setter
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, COLUMN_VALUE);
@@ -313,7 +342,7 @@ public final class JDBCConnection implements SQLJdbc{
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 
 		if (SHOW_SQL) {
-		//	SQL_UTILS.SQL_LOGGER(SCRIPT);
+			// SQL_UTILS.SQL_LOGGER(SCRIPT);
 		}
 
 		// gets all the fields
@@ -374,51 +403,36 @@ public final class JDBCConnection implements SQLJdbc{
 
 	}
 
+	/**
+	 * Set the primary key value
+	 * @param object
+	 * @param CLAZZ
+	 * @param RESULT_SET
+	 * @param PRIMARY_KEY
+	 * @throws SQLException
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws IntrospectionException
+	 */
 	private <E> void setPrimaryKeyValue(E object, final Class<?> CLAZZ, final ResultSet RESULT_SET,
 			final Field PRIMARY_KEY) throws SQLException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, IntrospectionException {
 		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
-			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(),
-					RESULT_SET, PRIMARY_KEY.getType());
+			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(
+					CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(), RESULT_SET, PRIMARY_KEY.getType());
 			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		} else {
-			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(PRIMARY_KEY), RESULT_SET,
-					PRIMARY_KEY.getType());
+			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(
+					SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(PRIMARY_KEY), RESULT_SET, PRIMARY_KEY.getType());
 			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		}
 	}
 
-	public static void main(String[] args) throws Exception {
-
-		JDBCConnection jdbc = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
-
-		Pessoa pessoa1 = new Pessoa();
-		pessoa1.setNome("Teste Cadastro");
-		pessoa1 = jdbc.persistObject(pessoa1, true);
-		
-		Pessoa pessoa2 = new Pessoa();
-		pessoa2.setNome("Teste 2");
-		pessoa2 = jdbc.persistObject(pessoa2, true);
-		
-		Departamento departamento = new Departamento();
-		departamento.setLider(pessoa1);
-		departamento.setNome("Testezinho");
-		departamento.setSigla("TT");
-		departamento = jdbc.persistObject(departamento, true);
-		
-		Matheus ma = new Matheus();
-		ma.setDepartamento(departamento);
-		ma.setNome("kk");
-		ma.setNota(12.6);
-		ma = jdbc.persistObject(ma, true);
-		
-		System.out.println(ma.getId());
-		System.out.println(ma.getDepartamento().getId());
-		System.out.println(ma.getDepartamento().getLider().getId());
-		
-
-	
-		
+	public static void main(String[] args) throws SQLException, JRUnexpectedException {
+		SQLJdbc jdbc = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
+		SQLWhereCondition w = new SQLWhereCondition("da", 5, SQLConditionType.IN);
+		jdbc.findOne(Escola.class, w, true);
 	}
-
+	
 }

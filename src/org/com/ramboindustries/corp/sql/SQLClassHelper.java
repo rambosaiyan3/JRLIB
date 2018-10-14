@@ -13,8 +13,17 @@ import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
+/**
+ * @author kernelpanic_r
+ *
+ */
 public class SQLClassHelper {
 
+	/**
+	 * Convert an attribute to a column of SQL
+	 * @param field that will be converted to column
+	 * @return a string that represents the column
+	 */	
 	public static String attributeToSQLColumn(Field field) {
 
 		// return the type, ie INT, VARCHAR, etc..
@@ -79,6 +88,7 @@ public class SQLClassHelper {
 				return FIELD;
 			}
 		}
+		// if the Primary key was not found, we can call it recursively
 		if(CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
 			return SQLClassHelper.getPrimaryKey(CLAZZ.getSuperclass());
 		}

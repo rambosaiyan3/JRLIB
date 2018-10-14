@@ -1,8 +1,9 @@
 package org.com.ramboindustries.corp.sql.exceptions;
 
 import java.lang.reflect.Field;
+import java.sql.SQLException;
 
-public class SQLColumnException extends Exception {
+public class SQLColumnException extends SQLException {
 
 	private static final long serialVersionUID = 7657682374249570870L;
 	private static final String MSG = "Invalid Column name ";

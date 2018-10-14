@@ -16,6 +16,11 @@ import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
+/**
+ * Class that contain the SQLs scripts
+ * @author kernelpanic_r
+ *
+ */
 public class SQLScripts {
 
 	private final SQLUtils SQL_UTILS;
@@ -28,7 +33,15 @@ public class SQLScripts {
 		return SQL_UTILS;
 	}
 	
-	
+	/**
+	 * Creates an INSERT script for SQL
+	 * @param object that contains the values
+	 * @return a string that represent the script
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws IntrospectionException
+	 */
 	public <E> String createInsertScriptSQL(E object) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		Map<String, String> map = SQL_UTILS.createInsert(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false));
 		StringBuilder columns = new StringBuilder(" ( ");
@@ -101,11 +114,21 @@ public class SQLScripts {
 		return sql.delete(last, sql.length()) + ");";
 	}
 	
-
+	/**
+	 * Creates a SELECT * FROM TABLE
+	 * @param CLAZZ that represents the TABLE
+	 * @return the SCRIPT
+	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
 		return SQLDataManipulation.SELECT_FROM + SQL_UTILS.getTableName(CLAZZ) + ";";
 	}
 
+	/**
+	 * Creates a SELECT A,B,C FROM TABLE
+	 * @param CLAZZ 
+	 * @param COLUMNS
+	 * @return
+	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS) {
 		final String FIELDS = SQL_UTILS.createFieldsToSelect(COLUMNS);
 		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQL_UTILS.getTableName(CLAZZ) + ";";

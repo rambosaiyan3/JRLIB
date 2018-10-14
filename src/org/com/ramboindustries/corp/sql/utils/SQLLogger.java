@@ -1,11 +1,17 @@
 package org.com.ramboindustries.corp.sql.utils;
 
+/**
+ * Simple Log manager for SQLs queries
+ * @author kernelpanic_r
+ *
+ */
 public final class SQLLogger {
 
 	private final  String INIT = "*|-|*|-|*|-|*|-|* INIT > > > > >";
 	private final  String END = "< < < < < END *|-|*|-|*|-|*|-|*";
 	private final  String MSG = "STARTING THE CONNECTION . . .";
-
+	private final  String ERROR = "AN ERROR OCURRED WHILE EXECUTING THE FOLLOWING SQL SCRIPT > > > > > ";
+	
 	
 	public void initConnection() {
 		System.out.println(INIT);
@@ -17,6 +23,10 @@ public final class SQLLogger {
 		System.out.println(INIT);
 		System.out.println(this.countSpaces(INIT) + SQL);
 		System.out.println(this.countSpaces(INIT + SQL) + END);
+	}
+	
+	public void showException(final String SQL) {
+		System.out.println(ERROR + SQL + " < < < < <");
 	}
 	
 	private String countSpaces(final String MSG) {
