@@ -8,7 +8,10 @@ public class MainTest {
 
 		SQLScripts ll = new SQLScripts();
 		System.out.println(ll.createTableScript(Aluno.class));
+		
+		
 
+		
 	}
 
 

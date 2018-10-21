@@ -40,7 +40,7 @@ public final class SQLUtils {
 			return value.toString();
 	}
 
-	protected Map<String, String> createInsert(final Set<SQLJavaField> SQL_JAVA) {
+	protected Map<String, String> mapAttributes(final Set<SQLJavaField> SQL_JAVA) {
 		Map<String, String> map = new HashMap<>();
 		SQL_JAVA.forEach(item -> {
 			map.put(item.getSqlColumn(), this.convertToString(item.getValue()));
@@ -56,8 +56,8 @@ public final class SQLUtils {
 	protected String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
 		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
-			builder.append(
-					WHERE.getFieldName() + WHERE.getConditionType() + WHERE.getFieldValue() + SQLDataManipulation.AND);
+			builder.append( SQLDataManipulation.AND + 
+					WHERE.getFieldName() + " " + WHERE.getConditionType().getType() +  " " + WHERE.getFieldValue());
 		});
 		return builder.toString();
 	}

@@ -42,8 +42,8 @@ public class SQLScripts {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	public <E> String createInsertScriptSQL(E object) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Map<String, String> map = SQL_UTILS.createInsert(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(object, false));
+	public <E> String createInsertScriptSQL(final E OBJECT) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		Map<String, String> map = SQL_UTILS.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
 		StringBuilder columns = new StringBuilder(" ( ");
 		StringBuilder values = new StringBuilder(" ( ");
 		map.forEach((column, value) -> {
@@ -54,8 +54,30 @@ public class SQLScripts {
 		columns.append(")");
 		values.delete(values.lastIndexOf(","), values.length());
 		values.append(")");
-		return SQLDataManipulation.INSERT + SQL_UTILS.getTableName(object.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
-		}
+		return SQLDataManipulation.INSERT + SQL_UTILS.getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
+	}
+	
+	/**
+	 * Creates a dinamic update script with a where condition
+	 * @param OBJECT
+	 * @param WHERE
+	 * @return
+	 * @throws IllegalAccessException
+	 * @throws IllegalArgumentException
+	 * @throws InvocationTargetException
+	 * @throws IntrospectionException
+	 */
+	public <E> String createUpdateScriptSQL(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+		Map<String, String> map = SQL_UTILS.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQL_UTILS.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		map.forEach((column, value) -> {
+			sql.append(column + " = " + value + ", ");
+		});
+		sql.delete(sql.lastIndexOf(","), sql.length());
+		sql.append(SQL_UTILS.createWhereCondition(WHERE));
+		return sql.toString();
+	}
+	
 	
 	
 	/**
