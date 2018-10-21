@@ -1,18 +1,37 @@
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/utils/SQLUtils.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/test/Person.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/exceptions/SQLColumnException.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/test/Employer.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/utils/ObjectAccessUtils.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLConstants.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SQLTable.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/test/Company.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLConditionType.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLInsert.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/utils/JRFieldValue.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLWhereCondition.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/exceptions/SQLTableException.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SQLColumn.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLJavaField.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/SQLUpdate.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/test/MainTest.java
-/home/kernelpanic_r/Workspace/Projetos Eclipse/jrlib/src/org/com/ramboindustries/corp/sql/annotations/SQLIgnore.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\exceptions\SQLTableException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\test\Aluno.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLTable.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\commands\SQLTransactionControl.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\SQLConstants.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\text\JRString.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\text\Type.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\test\Departamento.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\types\SQLMySqlType.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\exceptions\JRUnexpectedException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\test\Pessoa.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\abstracts\SQLJdbc.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\commands\SQLDataManipulation.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\commands\SQLDataDefinition.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\SQLWhereCondition.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\SQLConditionType.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\utils\SQLLogger.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\test\MainTest.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\JDBCConnection.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLInheritancePK.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\exceptions\SQLScriptException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\utils\ObjectAccessUtils.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLIdentifier.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\types\SQLOracleTypes.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\test\Escola.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\utils\SQLScripts.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\abstracts\SQLMySQLConstants.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\exceptions\SQLNotFoundException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLForeignKey.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLColumn.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\utils\JRFieldValue.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\SQLJavaField.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\exceptions\SQLIdentifierException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\exceptions\SQLColumnException.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\annotations\SQLIgnore.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\utils\SQLUtils.java
+C:\rambo\workspace\JrLib\src\org\com\ramboindustries\corp\sql\SQLClassHelper.java

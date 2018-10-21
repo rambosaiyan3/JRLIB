@@ -9,17 +9,25 @@ import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 @SQLTable(table = "TB_ESCOLA")
 public class Escola {
 
+	@SQLIdentifier(identifierName = "ESCOLA_ID")
+	private Long id;
 
 	@SQLColumn(name = "NOME", length = 40, required = true)
 	private String nomeEscola;
-	
+
 	@SQLIgnore
 	private Integer numeroFuncionarios;
 
 	@SQLForeignKey(name = "DIRETOR_ID", required = true, classReferenced = Pessoa.class)
 	private Pessoa diretor;
-	
-	
+
+	public Long getId() {
+		return id;
+	}
+
+	public void setId(Long id) {
+		this.id = id;
+	}
 
 	public String getNomeEscola() {
 		return nomeEscola;
@@ -44,6 +52,5 @@ public class Escola {
 	public void setDiretor(Pessoa diretor) {
 		this.diretor = diretor;
 	}
-	
-	
+
 }

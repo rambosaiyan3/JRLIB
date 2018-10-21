@@ -107,8 +107,14 @@ public final class SQLUtils {
 	 * @return a String that contains the line
 	 */
 	protected String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
-		String fieldReferenced = SQLClassHelper.getPrimaryKey(clazzReferenced).getAnnotation(SQLIdentifier.class)
-				.identifierName();
+		String fieldReferenced = null;
+		if (clazzReferenced.isAnnotationPresent(SQLInheritancePK.class)) {
+			// if the class has this annotation
+			fieldReferenced = clazzReferenced.getAnnotation(SQLInheritancePK.class).primaryKeyName();
+		} else {
+			fieldReferenced = SQLClassHelper.getPrimaryKey(clazzReferenced).getAnnotation(SQLIdentifier.class)
+					.identifierName();
+		}
 		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.FOREIGN_KEY + "("
 				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinition.REFERENCES
 				+ getTableName(clazzReferenced) + "(" + fieldReferenced + ")";

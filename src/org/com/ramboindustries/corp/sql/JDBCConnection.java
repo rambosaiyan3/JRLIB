@@ -17,6 +17,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
+import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.test.Escola;
@@ -157,12 +158,8 @@ public final class JDBCConnection implements SQLJdbc {
 	 * @throws Exception
 	 */
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
-			throws SQLException {
+			throws SQLException, JRUnexpectedException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
-
-		if (SHOW_SQL) {
-			// SQL_UTILS.SQL_LOGGER(SCRIPT);
-		}
 
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
@@ -172,10 +169,14 @@ public final class JDBCConnection implements SQLJdbc {
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | IntrospectionException e) {
-				e.printStackTrace();
+			}catch(SQLScriptException e) {
+				SQL_LOGGER.showException(e.getScript());
+				throw e;
+			} catch (SQLException e) {
 				throw new SQLException(e);
+			}catch(Exception e) {
+				SQL_LOGGER.showException(e.getMessage());
+				throw new JRUnexpectedException(e.getMessage());
 			}
 		}
 
@@ -211,9 +212,6 @@ public final class JDBCConnection implements SQLJdbc {
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS);
 
-		if (SHOW_SQL) {
-//			SQL_UTILS.SQL_LOGGER(SCRIPT);
-		}
 		List<Object[]> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
 
@@ -225,6 +223,9 @@ public final class JDBCConnection implements SQLJdbc {
 						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
+		}
+		if(SHOW_SQL) {
+			SQL_LOGGER.showScript(SCRIPT);
 		}
 		return objects;
 	}
@@ -233,10 +234,6 @@ public final class JDBCConnection implements SQLJdbc {
 			final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS, WHERE_CONDITION);
 
-		if (SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
-		}
-
 		List<Object[]> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
 
@@ -249,6 +246,11 @@ public final class JDBCConnection implements SQLJdbc {
 			}
 			objects.add(OBJECT);
 		}
+		
+		if (SHOW_SQL) {
+			SQL_LOGGER.showScript(SCRIPT);
+		}
+		
 		return objects;
 	}
 
@@ -280,7 +282,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
 			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, SQLException, IntrospectionException {
+			InvocationTargetException, SQLException, IntrospectionException, SQLScriptException {
 
 		// create and initialize the object
 		E object = ObjectAccessUtils.<E>initObject(CLAZZ);
@@ -341,27 +343,36 @@ public final class JDBCConnection implements SQLJdbc {
 		// creates the select script
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 
-		if (SHOW_SQL) {
-			// SQL_UTILS.SQL_LOGGER(SCRIPT);
-		}
 
 		// gets all the fields
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
-		// creates the result
-		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+		ResultSet resultSet = null;
+		
+		try {
+			// creates the result
+			resultSet = this.executeSQLSelect(SCRIPT);
 
-		// get the first and unique row
-		RESULT_SET.next();
+			// get the first and unique row
+			resultSet.next();
+
+		} catch (SQLException e) {
+			// if the script was incorrect formed
+			throw new SQLScriptException(e.getMessage(), SCRIPT);
+		}
 
 		// initialize the object
 		Object object = ObjectAccessUtils.initObject(CLAZZ);
 
 		// iterate over the fields
 		for (final Field FIELD : FIELDS) {
-			this.setValueToObject(object, FIELD.getType(), FIELD, RESULT_SET, SHOW_SQL);
+			this.setValueToObject(object, FIELD.getType(), FIELD, resultSet, SHOW_SQL);
 		}
-
+		
+		if(SHOW_SQL) {
+			SQL_LOGGER.showScript(SCRIPT);
+		}
+		
 		return object;
 	}
 
