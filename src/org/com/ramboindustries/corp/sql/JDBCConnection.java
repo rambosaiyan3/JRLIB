@@ -12,7 +12,6 @@ import java.util.List;
 
 import org.com.ramboindustries.corp.exceptions.JRUnexpectedException;
 import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
-import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
@@ -20,7 +19,6 @@ import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
-import org.com.ramboindustries.corp.test.Escola;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 
@@ -89,16 +87,16 @@ public final class JDBCConnection implements SQLJdbc {
 					
 			// Creates the SQL Script
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
-		try {	
+		
+			if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+			
+			try {	
 
 			// Gets all the fields from class
 			final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-
-			// shows the SQL script
-			if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 			RESULT_SET.next();
 			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
@@ -126,8 +124,8 @@ public final class JDBCConnection implements SQLJdbc {
 	@Override
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ);
-		if (SHOW_SQL) {
-		}
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
 		// init the list of objects
@@ -160,6 +158,8 @@ public final class JDBCConnection implements SQLJdbc {
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
 			throws SQLException, JRUnexpectedException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
+	
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
@@ -187,9 +187,8 @@ public final class JDBCConnection implements SQLJdbc {
 			final boolean SHOW_SQL) throws SQLException {
 
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
-		if (SHOW_SQL) {
-			// SQL_UTILS.SQL_LOGGER(SCRIPT);
-		}
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
 		List<E> objects = new ArrayList<>();
@@ -211,6 +210,7 @@ public final class JDBCConnection implements SQLJdbc {
 	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS);
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		List<Object[]> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
@@ -223,9 +223,6 @@ public final class JDBCConnection implements SQLJdbc {
 						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
-		}
-		if(SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
 		}
 		return objects;
 	}
@@ -233,6 +230,7 @@ public final class JDBCConnection implements SQLJdbc {
 	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, SQLWhereCondition WHERE_CONDITION,
 			final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS, WHERE_CONDITION);
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		List<Object[]> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
@@ -245,10 +243,6 @@ public final class JDBCConnection implements SQLJdbc {
 						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
-		}
-		
-		if (SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
 		}
 		
 		return objects;
@@ -260,6 +254,8 @@ public final class JDBCConnection implements SQLJdbc {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(OBJECT);
+		
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 		this.executeSQL(SCRIPT);
 		final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(CLAZZ);
 
@@ -273,7 +269,6 @@ public final class JDBCConnection implements SQLJdbc {
 		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
 
 		if (SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
 			SQL_LOGGER.showScript(MAX_ID);
 		}
 
@@ -342,6 +337,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 		// creates the select script
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
+		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 
 		// gets all the fields
@@ -369,9 +365,6 @@ public final class JDBCConnection implements SQLJdbc {
 			this.setValueToObject(object, FIELD.getType(), FIELD, resultSet, SHOW_SQL);
 		}
 		
-		if(SHOW_SQL) {
-			SQL_LOGGER.showScript(SCRIPT);
-		}
 		
 		return object;
 	}
@@ -440,10 +433,5 @@ public final class JDBCConnection implements SQLJdbc {
 		}
 	}
 
-	public static void main(String[] args) throws SQLException, JRUnexpectedException {
-		SQLJdbc jdbc = new JDBCConnection(SQLMySQLConstants.URL_LOCALHOST + "teste", "root", "");
-		SQLWhereCondition w = new SQLWhereCondition("da", 5, SQLConditionType.IN);
-		jdbc.findOne(Escola.class, w, true);
-	}
 	
 }

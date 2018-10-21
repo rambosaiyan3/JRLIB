@@ -49,15 +49,19 @@ public final class SQLUtils {
 	}
 
 	protected String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
-		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + WHERE_CONDITION.getConditionType().getType()
-				+ WHERE_CONDITION.getFieldValue();
+		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + " " + 
+				WHERE_CONDITION.getConditionType().getType() + " " + 
+				(WHERE_CONDITION.getFieldValue() instanceof String ?  "'" + WHERE_CONDITION.getFieldValue() + "'" : WHERE_CONDITION.getFieldValue()) ;
+			
 	}
 
 	protected String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
 		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( SQLDataManipulation.AND + 
-					WHERE.getFieldName() + " " + WHERE.getConditionType().getType() +  " " + WHERE.getFieldValue());
+					WHERE.getFieldName() + " " +
+					WHERE.getConditionType().getType() + " " + 
+					(WHERE.getFieldValue() instanceof String ? "'" + WHERE.getFieldValue() + "'" : WHERE.getFieldValue()));
 		});
 		return builder.toString();
 	}
