@@ -1,5 +1,7 @@
 #!/usr/bin/python
 
+##teste
+
 import os
 commit = raw_input("Commit name: ")
 branch = raw_input("Branch: ")
