@@ -85,7 +85,7 @@ public final class JDBCConnection implements SQLJdbc {
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
 			throws SQLException, JRUnexpectedException {
 					
-			// Creates the SQL Script
+			// Creates the SQL Script 
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
 		
 			if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
