@@ -137,6 +137,16 @@ public class SQLScripts {
 	}
 	
 	/**
+	 * Generates an dinamic script to drop the table
+	 * @param CLAZZ
+	 * @return
+	 */
+	public <E> String createDropTableScript(final Class<E> CLAZZ) {
+		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + SQL_UTILS.getTableName(CLAZZ) + " ;";
+	}
+	
+	
+	/**
 	 * Creates a SELECT * FROM TABLE
 	 * @param CLAZZ that represents the TABLE
 	 * @return the SCRIPT

@@ -14,11 +14,14 @@ import org.com.ramboindustries.corp.exceptions.JRUnexpectedException;
 import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
+import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
+import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
+import org.com.ramboindustries.corp.sql.utils.SQLUtils;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 
@@ -275,6 +278,37 @@ public final class JDBCConnection implements SQLJdbc {
 		return this.<E>findOne(CLAZZ, WHERE, true);
 	}
 
+	@Override
+	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException, JRUnexpectedException {
+		if(CLAZZ.isAnnotationPresent(SQLTable.class)) {
+			final String CREATE_TABLE = SQL_SCRIPTS.createTableScript(CLAZZ);
+			String dropTable = null;
+			
+			// if the Class has to drop the table
+			if(CLAZZ.getAnnotation(SQLTable.class).dropTableIfExists()) {
+				dropTable = SQL_SCRIPTS.createDropTableScript(CLAZZ);
+				if(SHOW_SQL) {
+					SQL_LOGGER.showScript(dropTable);
+				}
+			}
+			if(SHOW_SQL) {
+				SQL_LOGGER.showScript(CREATE_TABLE);
+			}
+			if(dropTable != null) {
+				// if the table exists, it will be dropped
+				this.executeSQL(dropTable);
+			}
+			// execute the script to create the table
+			this.executeSQL(CREATE_TABLE);
+			
+			}
+			
+		
+		// if the class does not have the @SQLTable annotation
+		throw new SQLTableException(CLAZZ);
+	}
+	
+	
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
 			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, SQLException, IntrospectionException, SQLScriptException {
@@ -432,6 +466,8 @@ public final class JDBCConnection implements SQLJdbc {
 			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		}
 	}
+
+
 
 	
 }

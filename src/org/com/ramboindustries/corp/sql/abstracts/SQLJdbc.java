@@ -26,6 +26,8 @@ public interface SQLJdbc {
 	public ResultSet executeSQLSelect(final String SQL) throws SQLException;
 
 	public void executeSQL(final String SQL) throws SQLException;
+	
+	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException, JRUnexpectedException;
 
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException, JRUnexpectedException;
 	
