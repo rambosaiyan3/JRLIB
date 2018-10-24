@@ -1,13 +1,10 @@
-org\com\ramboindustries\corp\test\Aluno.class
 org\com\ramboindustries\corp\sql\SQLJavaField.class
 org\com\ramboindustries\corp\sql\utils\SQLUtils$1.class
 org\com\ramboindustries\corp\sql\utils\SQLScripts.class
 org\com\ramboindustries\corp\sql\utils\SQLUtils.class
 org\com\ramboindustries\corp\sql\annotations\SQLIdentifier.class
 org\com\ramboindustries\corp\sql\annotations\SQLForeignKey.class
-org\com\ramboindustries\corp\test\Departamento.class
 org\com\ramboindustries\corp\sql\commands\SQLTransactionControl.class
-org\com\ramboindustries\corp\test\Escola.class
 org\com\ramboindustries\corp\sql\exceptions\SQLIdentifierException.class
 org\com\ramboindustries\corp\sql\annotations\SQLIgnore.class
 org\com\ramboindustries\corp\sql\commands\SQLDataManipulation.class
@@ -26,13 +23,11 @@ org\com\ramboindustries\corp\sql\JDBCConnection.class
 org\com\ramboindustries\corp\text\JRString.class
 org\com\ramboindustries\corp\sql\SQLConstants.class
 org\com\ramboindustries\corp\sql\commands\SQLDataDefinition.class
-org\com\ramboindustries\corp\test\Pessoa.class
 org\com\ramboindustries\corp\utils\JRFieldValue.class
 org\com\ramboindustries\corp\sql\exceptions\SQLScriptException.class
 org\com\ramboindustries\corp\sql\SQLConditionType.class
 org\com\ramboindustries\corp\sql\exceptions\SQLColumnException.class
 org\com\ramboindustries\corp\sql\types\SQLOracleTypes.class
 org\com\ramboindustries\corp\sql\abstracts\SQLJdbc.class
-org\com\ramboindustries\corp\test\MainTest.class
 org\com\ramboindustries\corp\sql\annotations\SQLInheritancePK.class
 org\com\ramboindustries\corp\sql\SQLWhereCondition.class
