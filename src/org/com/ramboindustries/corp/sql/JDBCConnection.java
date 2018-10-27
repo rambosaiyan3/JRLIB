@@ -49,7 +49,6 @@ public final class JDBCConnection implements SQLJdbc {
 
 	@Override
 	public void openConnection() throws SQLException {
-		SQL_LOGGER.initConnection();
 		connection = DriverManager.getConnection(URL, USER, PASS);
 		// enable to use commit and roolback
 		connection.setAutoCommit(false);
@@ -101,7 +100,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-
+			
 			RESULT_SET.next();
 			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			if (result == null) {
@@ -266,16 +265,15 @@ public final class JDBCConnection implements SQLJdbc {
 		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
 		final ResultSet RESULT_SET = this.executeSQLSelect(MAX_ID);
 
+		if (SHOW_SQL) {
+			SQL_LOGGER.showScript(MAX_ID);
+		}
+		
 		Long maxID = null;
 		if (RESULT_SET.next()) {
 			maxID = RESULT_SET.getLong(1);
 		}
 		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
-
-		if (SHOW_SQL) {
-			SQL_LOGGER.showScript(MAX_ID);
-		}
-
 		return this.<E>findOne(CLAZZ, WHERE, true);
 	}
 
@@ -323,29 +321,33 @@ public final class JDBCConnection implements SQLJdbc {
 
 		// iterate over fields, the primary key was already set, so we can start at 1
 		for (byte i = 1; i < FIELDS_SIZE; i++) {
+			
+			final Field ACTUAL_FIELD = FIELDS.get(i);
 
 			// get the name of the field
-			final String FIELD_NAME = FIELDS.get(i).getName();
+			final String FIELD_NAME = ACTUAL_FIELD.getName();
 
-			if (SQL_SCRIPTS.getSQLUtils().isFieldRelationship(FIELDS.get(i))) {
+			if (SQL_SCRIPTS.getSQLUtils().isFieldRelationship(ACTUAL_FIELD)) {
 				// if the field is a foreign key, so we have to create an object
 
 				// the column of the actual table
-				final String COLUMN_RELATIONSHIP = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELDS.get(i));
-
+				final String COLUMN_RELATIONSHIP = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(ACTUAL_FIELD);
+				
 				// the column that is the name of the Foreign Key
-				final String COLUMN_FOREIGN = SQL_SCRIPTS.getSQLUtils()
-						.getColumnNameFromField(SQLClassHelper.getPrimaryKey(FIELDS.get(i).getType()));
-
+				final String COLUMN_FOREIGN = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(ACTUAL_FIELD.getType());
+				
 				// gets the value of the actual table
 				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET,
-						FIELDS.get(i).getType());
+						ACTUAL_FIELD.getType());
 
 				// creates a where condition
 				final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,
 						SQLConditionType.EQUAL);
-				final Object VALUE = this.getSQLColumnValue(FIELDS.get(i).getType(), WHERE_CONDITION, SHOW_SQL);
+			
+				
+				final Object VALUE = this.getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, SHOW_SQL);
 
+				
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, VALUE);
 
 			} else {
@@ -372,7 +374,6 @@ public final class JDBCConnection implements SQLJdbc {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
-
 		// gets all the fields
 		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
 
@@ -381,7 +382,6 @@ public final class JDBCConnection implements SQLJdbc {
 		try {
 			// creates the result
 			resultSet = this.executeSQLSelect(SCRIPT);
-
 			// get the first and unique row
 			resultSet.next();
 
@@ -416,26 +416,33 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// get the class that represents the table
 			final Class<?> RELATIONSHIP = FIELD.getType();
-
-			// get the name of the primary key
-			final String PK_NAME = SQLClassHelper.getPrimaryKey(RELATIONSHIP).getAnnotation(SQLIdentifier.class)
-					.identifierName();
-
+			
+			// get the name of the PK of the field that represents the table
+			final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(RELATIONSHIP);
+			
 			// creates a where condition to find the value of relationship
 			final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
 
+			
 			// calls it recursively
 			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, SHOW_SQL);
 
 			ObjectAccessUtils.callSetter(object, FIELD_NAME, value);
 
 		} else {
-			// if the field is just a normal column
-			final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELD);
-
-			final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET, FIELD.getType());
-
-			ObjectAccessUtils.callSetter(object, FIELD_NAME, COLUMN_VALUE);
+			
+			/**
+			 * It is a bug, if the actual class is inheritance an Class that has a IDENDTIFIER, so it is a normal field, but 
+			 * if we have the @SQLInheritancePK we set another name to id, so when we try to find, it is not found at the table and
+			 * throws an exception
+			 */
+			if (!FIELD.isAnnotationPresent(SQLIdentifier.class) && CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
+				
+				// if the field is just a normal column
+				final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELD);
+				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET, 	FIELD.getType());
+				ObjectAccessUtils.callSetter(object, FIELD_NAME, COLUMN_VALUE);
+			}
 		}
 
 	}
