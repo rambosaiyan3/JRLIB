@@ -10,7 +10,6 @@ import java.sql.SQLException;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.com.ramboindustries.corp.exceptions.JRUnexpectedException;
 import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
@@ -87,7 +86,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 	@Override
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
-			throws SQLException, JRUnexpectedException {
+			throws SQLException {
 					
 			// Creates the SQL Script 
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
@@ -114,7 +113,7 @@ public final class JDBCConnection implements SQLJdbc {
 			SQL_LOGGER.showException(SCRIPT);
 			throw new SQLException(e);
 		} catch (Exception e) {
-			throw new JRUnexpectedException(e.getMessage());
+			throw new SQLException(e);
 		}
 	}
 
@@ -160,7 +159,7 @@ public final class JDBCConnection implements SQLJdbc {
 	 * @throws Exception
 	 */
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
-			throws SQLException, JRUnexpectedException {
+			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 	
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
@@ -180,7 +179,7 @@ public final class JDBCConnection implements SQLJdbc {
 				throw new SQLException(e);
 			}catch(Exception e) {
 				SQL_LOGGER.showException(e.getMessage());
-				throw new JRUnexpectedException(e.getMessage());
+				throw new SQLException(e);
 			}
 		}
 
@@ -254,7 +253,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 	@SuppressWarnings("unchecked")
 	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException, JRUnexpectedException {
+			IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(OBJECT);
@@ -279,7 +278,7 @@ public final class JDBCConnection implements SQLJdbc {
 	}
 
 	@Override
-	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException, JRUnexpectedException {
+	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
 		if (CLAZZ.isAnnotationPresent(SQLTable.class)) {
 			final String CREATE_TABLE = SQL_SCRIPTS.createTableScript(CLAZZ);
 			String dropTable = null;
