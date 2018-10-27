@@ -342,7 +342,7 @@ public final class JDBCConnection implements SQLJdbc {
 						SQLConditionType.EQUAL);
 			
 				
-				final Object VALUE = this.getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, SHOW_SQL);
+				final Object VALUE = this.getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, CLAZZ, SHOW_SQL);
 
 				
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, VALUE);
@@ -363,9 +363,8 @@ public final class JDBCConnection implements SQLJdbc {
 		return object;
 	}
 
-	private Object getSQLColumnValue(final Class<?> CLAZZ, final SQLWhereCondition WHERE_CONDITION,
-			final boolean SHOW_SQL) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException,
-			SQLException, IntrospectionException, InstantiationException, SQLIdentifierException {
+	private Object getSQLColumnValue(final Class<?> CLAZZ, final SQLWhereCondition WHERE_CONDITION, Class<?> DECLARED_CLASS,
+			final boolean SHOW_SQL) throws Exception {
 
 		// creates the select script
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
@@ -392,16 +391,15 @@ public final class JDBCConnection implements SQLJdbc {
 
 		// iterate over the fields
 		for (final Field FIELD : FIELDS) {
-			this.setValueToObject(object, FIELD.getType(), FIELD, resultSet, SHOW_SQL);
+			this.setValueToObject(object, FIELD.getType(), FIELD, resultSet, CLAZZ, SHOW_SQL);
 		}
 		
 		
 		return object;
 	}
 
-	private void setValueToObject(Object object, final Class<?> CLAZZ, final Field FIELD, final ResultSet RESULT_SET,
-			final boolean SHOW_SQL) throws SQLException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, IntrospectionException, InstantiationException, SQLIdentifierException {
+	private void setValueToObject(Object object, final Class<?> CLAZZ, final Field FIELD, final ResultSet RESULT_SET, final Class<?> DECLARED_CLASS,
+			final boolean SHOW_SQL) throws Exception{
 		final String FIELD_NAME = FIELD.getName();
 
 		if (SQLUtils.isFieldRelationship(FIELD)) {
@@ -420,26 +418,32 @@ public final class JDBCConnection implements SQLJdbc {
 			// creates a where condition to find the value of relationship
 			final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
 
+			// Class that declared the field, so we have to pass it here
+			final Class<?> DECLARING_CLASS = FIELD.getDeclaringClass();
 			
-			// calls it recursively
-			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, SHOW_SQL);
+			// calls it recursively, 
+			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, DECLARING_CLASS, SHOW_SQL);
 
 			ObjectAccessUtils.callSetter(object, FIELD_NAME, value);
 
 		} else {
+			// if the column is not a relationship
+			String columnName = null;
+			Object columnValue = null;
+		
+			if (DECLARED_CLASS.isAnnotationPresent(SQLInheritancePK.class) && FIELD.isAnnotationPresent(SQLIdentifier.class)) {
+				// if the field is a primary key of another class, and 
+				// we have the SQLInheritancePK on the class that inheritance the field
+				columnName = SQLUtils.getPrimaryKeyName(DECLARED_CLASS);
+				columnValue = SQLUtils.getSQLValue(columnName, RESULT_SET, FIELD.getType());
 			
-			/**
-			 * It is a bug, if the actual class is inheritance an Class that has a IDENDTIFIER, so it is a normal field, but 
-			 * if we have the @SQLInheritancePK we set another name to id, so when we try to find, it is not found at the table and
-			 * throws an exception
-			 */
-			if (!FIELD.isAnnotationPresent(SQLIdentifier.class) && CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
-				
-				// if the field is just a normal column
-				final String COLUMN_NAME = SQLUtils.getColumnNameFromField(FIELD);
-				final Object COLUMN_VALUE = SQLUtils.getSQLValue(COLUMN_NAME, RESULT_SET, 	FIELD.getType());
-				ObjectAccessUtils.callSetter(object, FIELD_NAME, COLUMN_VALUE);
+			} else {
+				columnName = SQLUtils.getColumnNameFromField(FIELD);
+				columnValue = SQLUtils.getSQLValue(columnName, RESULT_SET, FIELD.getType());
+			
 			}
+			ObjectAccessUtils.callSetter(object, FIELD_NAME, columnValue);
+
 		}
 
 	}

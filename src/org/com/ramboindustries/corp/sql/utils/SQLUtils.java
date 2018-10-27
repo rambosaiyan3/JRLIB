@@ -250,7 +250,7 @@ public final class SQLUtils {
 		Field field = SQLClassHelper.getPrimaryKey(CLAZZ);
 		if (field == null) {
 			if (CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
-				return getPrimaryKeyName(CLAZZ.getSuperclass());
+				return SQLUtils.getPrimaryKeyName(CLAZZ.getSuperclass());
 			} else {
 				throw new SQLIdentifierException("A " + SQLIdentifier.class.getSimpleName() + " was not found!");
 			}
