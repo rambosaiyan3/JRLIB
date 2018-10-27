@@ -140,8 +140,7 @@ public final class JDBCConnection implements SQLJdbc {
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | IntrospectionException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
@@ -200,8 +199,7 @@ public final class JDBCConnection implements SQLJdbc {
 		while (RESULT_SET.next()) {
 			try {
 				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (InstantiationException | IllegalAccessException | IllegalArgumentException
-					| InvocationTargetException | IntrospectionException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				throw new SQLException(e);
 			}
@@ -273,8 +271,12 @@ public final class JDBCConnection implements SQLJdbc {
 		if (RESULT_SET.next()) {
 			maxID = RESULT_SET.getLong(1);
 		}
+		
+		// creates a where condition to find the last register 
 		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
-		return this.<E>findOne(CLAZZ, WHERE, true);
+		
+		// return the register and convert to object
+		return this.<E>findOne(CLAZZ, WHERE, SHOW_SQL);
 	}
 
 	@Override
@@ -307,15 +309,10 @@ public final class JDBCConnection implements SQLJdbc {
 	
 	
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
-			final boolean SHOW_SQL) throws InstantiationException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, SQLException, IntrospectionException, SQLScriptException {
+			final boolean SHOW_SQL) throws SQLException, Exception{
 
-		// create and initialize the object
-		E object = ObjectAccessUtils.<E>initObject(CLAZZ);
-
-		// set the primary key value, for the first item of the element
-		// primary key, will always be the first element
-		this.setPrimaryKeyValue(object, CLAZZ, RESULT_SET, FIELDS.get(0));
+		 // Create an object, and we set it the primary key value to the object, we get the first field that is the one who represents primary key
+		E object = this.setPrimaryKeyValue(ObjectAccessUtils.<E>initObject(CLAZZ), CLAZZ, RESULT_SET, FIELDS.get(0));
 
 		final byte FIELDS_SIZE = (byte) FIELDS.size();
 
@@ -459,18 +456,18 @@ public final class JDBCConnection implements SQLJdbc {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	private <E> void setPrimaryKeyValue(E object, final Class<?> CLAZZ, final ResultSet RESULT_SET,
-			final Field PRIMARY_KEY) throws SQLException, IllegalAccessException, IllegalArgumentException,
-			InvocationTargetException, IntrospectionException {
+	private <E> E setPrimaryKeyValue(E object, final Class<?> CLAZZ, final ResultSet RESULT_SET,	final Field PRIMARY_KEY) throws SQLException, Exception {
+		Object value = null;
+		/**
+		 * If the class has the annotation that set the name of the Primary Keys
+		 */
 		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
-			final Object VALUE = SQLUtils.getSQLValue(
-					CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(), RESULT_SET, PRIMARY_KEY.getType());
-			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
+			value = SQLUtils.getSQLValue(CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(), RESULT_SET, PRIMARY_KEY.getType());
 		} else {
-			final Object VALUE = SQLUtils.getSQLValue(
-					SQLUtils.getColumnNameFromField(PRIMARY_KEY), RESULT_SET, PRIMARY_KEY.getType());
-			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
+			value = SQLUtils.getSQLValue(SQLUtils.getColumnNameFromField(PRIMARY_KEY), RESULT_SET, PRIMARY_KEY.getType());
 		}
+		ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), value);
+		return object;
 	}
 
 
