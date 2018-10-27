@@ -326,7 +326,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// if the Class has to drop the table
 			if (CLAZZ.getAnnotation(SQLTable.class).dropTableIfExists()) {
-				dropTable = SQL_SCRIPTS.createDropTableScript(CLAZZ);
+				dropTable = SQL_SCRIPTS.createSQLDropTableScript(CLAZZ);
 				if (SHOW_SQL) {
 					SQL_LOGGER.showScript(dropTable);
 				}
@@ -346,6 +346,11 @@ public final class JDBCConnection implements SQLJdbc {
 		}
 	}
 	
+	public <E> void deleteObject(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL) throws SQLException {
+		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
+		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		this.executeSQL(SCRIPT);
+	}
 	
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
 			final boolean SHOW_SQL) throws SQLException, Exception{

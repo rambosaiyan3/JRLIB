@@ -131,7 +131,7 @@ public class SQLScripts {
 	 * @param CLAZZ
 	 * @return
 	 */
-	public <E> String createDropTableScript(final Class<E> CLAZZ) {
+	public <E> String createSQLDropTableScript(final Class<E> CLAZZ) {
 		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + SQLUtils.getTableName(CLAZZ) + " ;";
 	}
 	
@@ -180,6 +180,11 @@ public class SQLScripts {
 	public <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 		return SQLDataManipulation.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulation.FROM +  SQLUtils.getTableName(CLAZZ) + ";"; 
+	}
+	
+	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
+		final String WHERE_CONDITION = SQLUtils.createWhereCondition(WHERE);
+		return SQLDataManipulation.DELETE_FROM + SQLUtils.getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
 	}
 	
 }

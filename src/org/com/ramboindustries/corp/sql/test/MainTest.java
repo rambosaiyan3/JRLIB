@@ -67,6 +67,8 @@ public class MainTest {
 		out.println(user.getLogin());
 		out.println(user.getName());
 		
+		SQLWhereCondition where1= new SQLWhereCondition("NAME", "Matheus Rambo", SQLConditionType.EQUAL);
+		baseEmployer.delete(Employer.class, where1);
 		
 	}
 

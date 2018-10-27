@@ -39,6 +39,7 @@ public class BaseDAO<E extends BaseEntity> {
 			jdbc.persistObject(object, SHOW_SQL);
 			jdbc.commit();
 		} catch (Exception e) {
+			//jdbc.rollback();
 			e.printStackTrace();
 		}
 	}
@@ -47,4 +48,9 @@ public class BaseDAO<E extends BaseEntity> {
 		return jdbc.findOne(clazz, where, SHOW_SQL);
 	}
 
+	public void delete(Class<E> clazz, SQLWhereCondition where) throws SQLException {
+		jdbc.deleteObject(clazz, where, SHOW_SQL);
+		jdbc.commit();
+	}
+	
 }

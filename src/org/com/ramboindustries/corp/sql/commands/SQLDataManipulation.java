@@ -14,6 +14,7 @@ public final class SQLDataManipulation {
 	public final static String VALUES = " VALUES ";
 	public final static String MAX = " MAX ";
 	public final static String SELECT_MAX = " SELECT MAX";
+	public final static String DELETE_FROM = " DELETE FROM ";
 	
 	private SQLDataManipulation() {
 		
