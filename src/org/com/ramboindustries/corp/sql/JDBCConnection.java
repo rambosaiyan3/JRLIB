@@ -21,6 +21,7 @@ import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
+import org.com.ramboindustries.corp.sql.utils.SQLUtils;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 
@@ -96,7 +97,7 @@ public final class JDBCConnection implements SQLJdbc {
 			try {	
 
 			// Gets all the fields from class
-			final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
@@ -129,7 +130,7 @@ public final class JDBCConnection implements SQLJdbc {
 		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ);
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
-		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 		// init the list of objects
 		List<E> objects = new ArrayList<>();
@@ -164,7 +165,7 @@ public final class JDBCConnection implements SQLJdbc {
 	
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
-		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 		List<E> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
@@ -192,7 +193,7 @@ public final class JDBCConnection implements SQLJdbc {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
-		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 		List<E> objects = new ArrayList<>();
 		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
@@ -222,8 +223,8 @@ public final class JDBCConnection implements SQLJdbc {
 			final byte LENGTH = (byte) COLUMNS.length;
 			final Object[] OBJECT = new Object[LENGTH];
 			for (byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(
-						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
+				OBJECT[i] = SQLUtils.getSQLValue(
+						SQLUtils.getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
 		}
@@ -242,8 +243,8 @@ public final class JDBCConnection implements SQLJdbc {
 			final byte LENGTH = (byte) COLUMNS.length;
 			final Object[] OBJECT = new Object[LENGTH];
 			for (byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQL_SCRIPTS.getSQLUtils().getSQLValue(
-						SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
+				OBJECT[i] = SQLUtils.getSQLValue(
+						SQLUtils.getColumnNameFromField(COLUMNS[i]), RESULT_SET, COLUMNS[i].getType());
 			}
 			objects.add(OBJECT);
 		}
@@ -260,7 +261,7 @@ public final class JDBCConnection implements SQLJdbc {
 		
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 		this.executeSQL(SCRIPT);
-		final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(CLAZZ);
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
 		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
 		final ResultSet RESULT_SET = this.executeSQLSelect(MAX_ID);
@@ -327,17 +328,17 @@ public final class JDBCConnection implements SQLJdbc {
 			// get the name of the field
 			final String FIELD_NAME = ACTUAL_FIELD.getName();
 
-			if (SQL_SCRIPTS.getSQLUtils().isFieldRelationship(ACTUAL_FIELD)) {
+			if (SQLUtils.isFieldRelationship(ACTUAL_FIELD)) {
 				// if the field is a foreign key, so we have to create an object
 
 				// the column of the actual table
-				final String COLUMN_RELATIONSHIP = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(ACTUAL_FIELD);
+				final String COLUMN_RELATIONSHIP = SQLUtils.getColumnNameFromField(ACTUAL_FIELD);
 				
 				// the column that is the name of the Foreign Key
-				final String COLUMN_FOREIGN = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(ACTUAL_FIELD.getType());
+				final String COLUMN_FOREIGN = SQLUtils.getPrimaryKeyName(ACTUAL_FIELD.getType());
 				
 				// gets the value of the actual table
-				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET,
+				final Object COLUMN_VALUE = SQLUtils.getSQLValue(COLUMN_RELATIONSHIP, RESULT_SET,
 						ACTUAL_FIELD.getType());
 
 				// creates a where condition
@@ -353,9 +354,9 @@ public final class JDBCConnection implements SQLJdbc {
 			} else {
 				// this is a normal field, that we do not need to create an object to them
 
-				final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELDS.get(i));
+				final String COLUMN_NAME = SQLUtils.getColumnNameFromField(FIELDS.get(i));
 
-				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET,
+				final Object COLUMN_VALUE = SQLUtils.getSQLValue(COLUMN_NAME, RESULT_SET,
 						FIELDS.get(i).getType());
 
 				// calls the object setter
@@ -375,7 +376,7 @@ public final class JDBCConnection implements SQLJdbc {
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		// gets all the fields
-		final List<Field> FIELDS = SQL_SCRIPTS.getSQLUtils().allFieldsToTable(CLAZZ);
+		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 		ResultSet resultSet = null;
 		
@@ -407,18 +408,18 @@ public final class JDBCConnection implements SQLJdbc {
 			InvocationTargetException, IntrospectionException, InstantiationException, SQLIdentifierException {
 		final String FIELD_NAME = FIELD.getName();
 
-		if (SQL_SCRIPTS.getSQLUtils().isFieldRelationship(FIELD)) {
+		if (SQLUtils.isFieldRelationship(FIELD)) {
 			// get the name of table of the field
-			final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELD);
+			final String COLUMN_NAME = SQLUtils.getColumnNameFromField(FIELD);
 
 			// get the value
-			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET, CLAZZ);
+			final Object VALUE = SQLUtils.getSQLValue(COLUMN_NAME, RESULT_SET, CLAZZ);
 
 			// get the class that represents the table
 			final Class<?> RELATIONSHIP = FIELD.getType();
 			
 			// get the name of the PK of the field that represents the table
-			final String PK_NAME = SQL_SCRIPTS.getSQLUtils().getPrimaryKeyName(RELATIONSHIP);
+			final String PK_NAME = SQLUtils.getPrimaryKeyName(RELATIONSHIP);
 			
 			// creates a where condition to find the value of relationship
 			final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
@@ -439,8 +440,8 @@ public final class JDBCConnection implements SQLJdbc {
 			if (!FIELD.isAnnotationPresent(SQLIdentifier.class) && CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
 				
 				// if the field is just a normal column
-				final String COLUMN_NAME = SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(FIELD);
-				final Object COLUMN_VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(COLUMN_NAME, RESULT_SET, 	FIELD.getType());
+				final String COLUMN_NAME = SQLUtils.getColumnNameFromField(FIELD);
+				final Object COLUMN_VALUE = SQLUtils.getSQLValue(COLUMN_NAME, RESULT_SET, 	FIELD.getType());
 				ObjectAccessUtils.callSetter(object, FIELD_NAME, COLUMN_VALUE);
 			}
 		}
@@ -463,12 +464,12 @@ public final class JDBCConnection implements SQLJdbc {
 			final Field PRIMARY_KEY) throws SQLException, IllegalAccessException, IllegalArgumentException,
 			InvocationTargetException, IntrospectionException {
 		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
-			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(
+			final Object VALUE = SQLUtils.getSQLValue(
 					CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(), RESULT_SET, PRIMARY_KEY.getType());
 			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		} else {
-			final Object VALUE = SQL_SCRIPTS.getSQLUtils().getSQLValue(
-					SQL_SCRIPTS.getSQLUtils().getColumnNameFromField(PRIMARY_KEY), RESULT_SET, PRIMARY_KEY.getType());
+			final Object VALUE = SQLUtils.getSQLValue(
+					SQLUtils.getColumnNameFromField(PRIMARY_KEY), RESULT_SET, PRIMARY_KEY.getType());
 			ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), VALUE);
 		}
 	}

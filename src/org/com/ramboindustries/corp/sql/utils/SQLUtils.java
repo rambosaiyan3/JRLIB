@@ -31,7 +31,9 @@ import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
  */
 public final class SQLUtils {
 
-	private String convertToString(Object value) {
+	private SQLUtils() {}
+	
+	private static String convertToString(Object value) {
 		if (value == null)
 			return null;
 		else if (value instanceof String || value instanceof java.util.Date)
@@ -40,22 +42,22 @@ public final class SQLUtils {
 			return value.toString();
 	}
 
-	protected Map<String, String> mapAttributes(final Set<SQLJavaField> SQL_JAVA) {
+	protected static Map<String, String> mapAttributes(final Set<SQLJavaField> SQL_JAVA) {
 		Map<String, String> map = new HashMap<>();
 		SQL_JAVA.forEach(item -> {
-			map.put(item.getSqlColumn(), this.convertToString(item.getValue()));
+			map.put(item.getSqlColumn(), SQLUtils.convertToString(item.getValue()));
 		});
 		return map;
 	}
 
-	protected String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
+	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
 		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + " " + 
 				WHERE_CONDITION.getConditionType().getType() + " " + 
 				(WHERE_CONDITION.getFieldValue() instanceof String ?  "'" + WHERE_CONDITION.getFieldValue() + "'" : WHERE_CONDITION.getFieldValue()) ;
 			
 	}
 
-	protected String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
+	protected static String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
 		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( SQLDataManipulation.AND + 
@@ -66,10 +68,10 @@ public final class SQLUtils {
 		return builder.toString();
 	}
 
-	protected String createFieldsToSelect(final Field[] COLUMNS) {
+	protected static String createFieldsToSelect(final Field[] COLUMNS) {
 		StringBuilder builder = new StringBuilder(" ");
 		for (final Field FIELD : COLUMNS) {
-			builder.append(this.getColumnNameFromField(FIELD) + ", ");
+			builder.append(SQLUtils.getColumnNameFromField(FIELD) + ", ");
 		}
 		builder.delete(builder.lastIndexOf(","), builder.length());
 		return builder.toString();
@@ -81,7 +83,7 @@ public final class SQLUtils {
 	 * @param clazz that represents the table
 	 * @return table name
 	 */
-	protected String getTableName(Class<?> clazz) {
+	protected static String getTableName(Class<?> clazz) {
 		return clazz.isAnnotationPresent(SQLTable.class) ? clazz.getAnnotation(SQLTable.class).table()
 				: clazz.getSimpleName();
 	}
@@ -93,7 +95,7 @@ public final class SQLUtils {
 	 * @param field      the field that is the primary key
 	 * @return a String that contains the line
 	 */
-	protected String createPrimaryKeyConstraint(String constraint, Field field, Class<?> clazz) {
+	protected static String createPrimaryKeyConstraint(String constraint, Field field, Class<?> clazz) {
 		String name = null;
 		if (clazz.isAnnotationPresent(SQLInheritancePK.class))
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
@@ -110,7 +112,7 @@ public final class SQLUtils {
 	 * @param clazzReferenced class that has the primary key
 	 * @return a String that contains the line
 	 */
-	protected String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
+	protected static String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
 		String fieldReferenced = null;
 		if (clazzReferenced.isAnnotationPresent(SQLInheritancePK.class)) {
 			// if the class has this annotation
@@ -124,7 +126,7 @@ public final class SQLUtils {
 				+ getTableName(clazzReferenced) + "(" + fieldReferenced + ")";
 	}
 
-	public List<Field> allFieldsToTable(Class<?> clazz) throws SQLIdentifierException {
+	public static List<Field> allFieldsToTable(Class<?> clazz) throws SQLIdentifierException {
 		List<Field> fields = new ArrayList<>();
 
 		// gets all the superclass from the clazz
@@ -145,12 +147,12 @@ public final class SQLUtils {
 
 		// we set the primary key for the first element
 		classes.add(clazz);
-		this.setPrimaryKeyPosition(fields, classes);
+		SQLUtils.setPrimaryKeyPosition(fields, classes);
 
 		return fields;
 	}
 
-	private void setPrimaryKeyPosition(List<Field> fields, List<?> classes) throws SQLIdentifierException {
+	private static void setPrimaryKeyPosition(List<Field> fields, List<?> classes) throws SQLIdentifierException {
 		int position = 0;
 		byte number = 0;
 		for (int i = 0; i < fields.size(); i++) {
@@ -179,7 +181,7 @@ public final class SQLUtils {
 		fields.add(0, primaryKey);
 	}
 
-	public String getColumnNameFromField(final Field FIELD) {
+	public static String getColumnNameFromField(final Field FIELD) {
 		if (FIELD.isAnnotationPresent(SQLIdentifier.class))
 			return FIELD.getAnnotation(SQLIdentifier.class).identifierName();
 		else if (FIELD.isAnnotationPresent(SQLColumn.class))
@@ -190,7 +192,7 @@ public final class SQLUtils {
 			return FIELD.getName();
 	}
 
-	public boolean isFieldRelationship(final Field FIELD) {
+	public static boolean isFieldRelationship(final Field FIELD) {
 		return FIELD.isAnnotationPresent(SQLForeignKey.class);
 	}
 
@@ -203,7 +205,7 @@ public final class SQLUtils {
 	 * @return
 	 * @throws SQLException
 	 */
-	public Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
+	public static Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
 		Type type = Type.getTypeByName(clazz.getSimpleName());
 		if (type == null) {
 			Field field = SQLClassHelper.getPrimaryKey(clazz);
@@ -241,7 +243,7 @@ public final class SQLUtils {
 	 * @return the name of Primary Key
 	 * @throws SQLIdentifierException if we do not find a primary key
 	 */
-	public String getPrimaryKeyName(final Class<?> CLAZZ) throws SQLIdentifierException {
+	public static String getPrimaryKeyName(final Class<?> CLAZZ) throws SQLIdentifierException {
 		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
 			return CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		}
@@ -253,7 +255,7 @@ public final class SQLUtils {
 				throw new SQLIdentifierException("A " + SQLIdentifier.class.getSimpleName() + " was not found!");
 			}
 		}
-		return this.getColumnNameFromField(field);
+		return SQLUtils.getColumnNameFromField(field);
 
 	}
 

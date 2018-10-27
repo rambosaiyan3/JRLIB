@@ -23,16 +23,6 @@ import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
  */
 public class SQLScripts {
 
-	private final SQLUtils SQL_UTILS;
-
-	public SQLScripts() {
-		this.SQL_UTILS = new SQLUtils();
-	}
-	
-	public SQLUtils getSQLUtils() {
-		return SQL_UTILS;
-	}
-	
 	/**
 	 * Creates an INSERT script for SQL
 	 * @param object that contains the values
@@ -43,7 +33,7 @@ public class SQLScripts {
 	 * @throws IntrospectionException
 	 */
 	public <E> String createInsertScriptSQL(final E OBJECT) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Map<String, String> map = SQL_UTILS.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
 		StringBuilder columns = new StringBuilder(" ( ");
 		StringBuilder values = new StringBuilder(" ( ");
 		map.forEach((column, value) -> {
@@ -54,7 +44,7 @@ public class SQLScripts {
 		columns.append(")");
 		values.delete(values.lastIndexOf(","), values.length());
 		values.append(")");
-		return SQLDataManipulation.INSERT + SQL_UTILS.getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
+		return SQLDataManipulation.INSERT + SQLUtils.getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
 	}
 	
 	/**
@@ -68,13 +58,13 @@ public class SQLScripts {
 	 * @throws IntrospectionException
 	 */
 	public <E> String createUpdateScriptSQL(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		Map<String, String> map = SQL_UTILS.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
-		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQL_UTILS.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
 		map.forEach((column, value) -> {
 			sql.append(column + " = " + value + ", ");
 		});
 		sql.delete(sql.lastIndexOf(","), sql.length());
-		sql.append(SQL_UTILS.createWhereCondition(WHERE));
+		sql.append(SQLUtils.createWhereCondition(WHERE));
 		return sql.toString();
 	}
 	
@@ -88,10 +78,10 @@ public class SQLScripts {
 	 * @throws SQLIdentifierException
 	 */
 	public String createTableScript(Class<?> clazz) throws SQLIdentifierException {
-		List<Field> fields = SQL_UTILS.allFieldsToTable(clazz);
+		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
-		sql.append(SQLDataDefinition.CREATE_TABLE + SQL_UTILS.getTableName(clazz) + " (\n");
+		sql.append(SQLDataDefinition.CREATE_TABLE + SQLUtils.getTableName(clazz) + " (\n");
 
 		// the first element will always be the 1
 		Field primaryKey = fields.get(0);
@@ -112,8 +102,8 @@ public class SQLScripts {
 				// that has an object that represents another table
 				if (field.isAnnotationPresent(SQLForeignKey.class)) {
 					// we create and add a constraint line to it
-					foreignConstraints.add(SQL_UTILS.createForeignKeyConstraint(
-							("FK_" + SQL_UTILS.getTableName(clazz) + "_" + SQL_UTILS.getTableName(field.getType())), field,
+					foreignConstraints.add(SQLUtils.createForeignKeyConstraint(
+							("FK_" + SQLUtils.getTableName(clazz) + "_" + SQLUtils.getTableName(field.getType())), field,
 							field.getType()));
 				}
 				// creates a sql line
@@ -123,7 +113,7 @@ public class SQLScripts {
 		}
 
 		if (primaryKey != null) {
-			sql.append(SQL_UTILS.createPrimaryKeyConstraint("PK_" + SQL_UTILS.getTableName(clazz), primaryKey, clazz));
+			sql.append(SQLUtils.createPrimaryKeyConstraint("PK_" + SQLUtils.getTableName(clazz), primaryKey, clazz));
 			sql.append(",\n");
 		}
 
@@ -142,7 +132,7 @@ public class SQLScripts {
 	 * @return
 	 */
 	public <E> String createDropTableScript(final Class<E> CLAZZ) {
-		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + SQL_UTILS.getTableName(CLAZZ) + " ;";
+		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + SQLUtils.getTableName(CLAZZ) + " ;";
 	}
 	
 	
@@ -152,7 +142,7 @@ public class SQLScripts {
 	 * @return the SCRIPT
 	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
-		return SQLDataManipulation.SELECT_FROM + SQL_UTILS.getTableName(CLAZZ) + ";";
+		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + ";";
 	}
 
 	/**
@@ -162,34 +152,34 @@ public class SQLScripts {
 	 * @return
 	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS) {
-		final String FIELDS = SQL_UTILS.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQL_UTILS.getTableName(CLAZZ) + ";";
+		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
+		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQLUtils.getTableName(CLAZZ) + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
-		return SQLDataManipulation.SELECT_FROM + SQL_UTILS.getTableName(CLAZZ) + SQL_UTILS.createWhereCondition(WHERE);
+		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS, final SQLWhereCondition WHERE) {
-		final String FIELDS = SQL_UTILS.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQL_UTILS.getTableName(CLAZZ) + SQL_UTILS.createWhereCondition(WHERE) + ";";
+		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
+		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQLUtils.getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE) + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
-		final String CONDITIONS = SQL_UTILS.createWhereCondition(WHERE);
-		return SQLDataManipulation.SELECT_FROM + SQL_UTILS.getTableName(CLAZZ) + CONDITIONS + ";";
+		final String CONDITIONS = SQLUtils.createWhereCondition(WHERE);
+		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + CONDITIONS + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS,
 			final List<SQLWhereCondition> WHERE) {
-		final String FIELDS = SQL_UTILS.createFieldsToSelect(COLUMNS);
-		final String WHERE_CONDITIONS = SQL_UTILS.createWhereCondition(WHERE);
-		return SQLDataManipulation.SELECT + FIELDS + SQL_UTILS.getTableName(CLAZZ) + WHERE_CONDITIONS + ";";
+		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
+		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
+		return SQLDataManipulation.SELECT + FIELDS + SQLUtils.getTableName(CLAZZ) + WHERE_CONDITIONS + ";";
 	}
 	
 	public <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {
-		final String PK_NAME = SQL_UTILS.getPrimaryKeyName(CLAZZ);
-		return SQLDataManipulation.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulation.FROM +  SQL_UTILS.getTableName(CLAZZ) + ";"; 
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
+		return SQLDataManipulation.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulation.FROM +  SQLUtils.getTableName(CLAZZ) + ";"; 
 	}
 	
 }
