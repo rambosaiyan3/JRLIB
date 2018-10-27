@@ -32,7 +32,7 @@ public class SQLScripts {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	public <E> String createInsertScriptSQL(final E OBJECT) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+	public <E> String createSQLInsertScript(final E OBJECT) throws Exception {
 		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
 		StringBuilder columns = new StringBuilder(" ( ");
 		StringBuilder values = new StringBuilder(" ( ");
@@ -57,7 +57,7 @@ public class SQLScripts {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	public <E> String createUpdateScriptSQL(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+	public <E> String createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
 		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
 		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
 		map.forEach((column, value) -> {
@@ -77,7 +77,7 @@ public class SQLScripts {
 	 * @return
 	 * @throws SQLIdentifierException
 	 */
-	public String createTableScript(Class<?> clazz) throws SQLIdentifierException {
+	public String createSQLTableScript(Class<?> clazz) throws SQLIdentifierException {
 		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
@@ -185,6 +185,11 @@ public class SQLScripts {
 	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
 		final String WHERE_CONDITION = SQLUtils.createWhereCondition(WHERE);
 		return SQLDataManipulation.DELETE_FROM + SQLUtils.getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
+	}
+	
+	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
+		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
+		return SQLDataManipulation.DELETE_FROM + SQLUtils.getTableName(CLAZZ) + " " + WHERE_CONDITIONS + " ;";
 	}
 	
 }

@@ -196,6 +196,7 @@ public final class JDBCConnection implements SQLJdbc {
 	 * @throws SQLException
 	 * @throws Exception
 	 */
+	@Override
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
@@ -224,6 +225,7 @@ public final class JDBCConnection implements SQLJdbc {
 		return objects;
 	}
 
+	@Override
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS,
 			final boolean SHOW_SQL) throws SQLException {
 
@@ -247,6 +249,7 @@ public final class JDBCConnection implements SQLJdbc {
 		return objects;
 	}
 
+	@Override
 	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS);
@@ -267,6 +270,7 @@ public final class JDBCConnection implements SQLJdbc {
 		return objects;
 	}
 
+	@Override
 	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, SQLWhereCondition WHERE_CONDITION,
 			final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS, WHERE_CONDITION);
@@ -288,12 +292,16 @@ public final class JDBCConnection implements SQLJdbc {
 		return objects;
 	}
 
+	/**
+	 * Persist the java object to the database, and then return the object with all 
+	 * his relationships 
+	 */
 	@SuppressWarnings("unchecked")
-	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws IllegalAccessException,
-			IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLException {
+	@Override
+	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws Exception {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
-		final String SCRIPT = SQL_SCRIPTS.createInsertScriptSQL(OBJECT);
+		final String SCRIPT = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
 		
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 		this.executeSQL(SCRIPT);
@@ -321,7 +329,7 @@ public final class JDBCConnection implements SQLJdbc {
 	@Override
 	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
 		if (CLAZZ.isAnnotationPresent(SQLTable.class)) {
-			final String CREATE_TABLE = SQL_SCRIPTS.createTableScript(CLAZZ);
+			final String CREATE_TABLE = SQL_SCRIPTS.createSQLTableScript(CLAZZ);
 			String dropTable = null;
 
 			// if the Class has to drop the table
@@ -346,12 +354,43 @@ public final class JDBCConnection implements SQLJdbc {
 		}
 	}
 	
+	/**
+	 * Delete a row at the database
+	 * @param CLAZZ
+	 * @param WHERE
+	 * @param SHOW_SQL
+	 * @throws SQLException
+	 */
+	@Override
 	public <E> void deleteObject(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
 		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
 		this.executeSQL(SCRIPT);
 	}
 	
+	@Override
+	public <E> void deleteObject(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL) throws SQLException{
+		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
+		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		this.executeSQL(SCRIPT);
+	}
+
+	/**
+	 * Merge object to database, usually at update statements
+	 */
+	@Override
+	public <E> E mergeObject(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
+		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		//TODO
+		return null;
+	}
+
+	@Override
+	public <E> E mergeObject(E OBJECT, List<SQLWhereCondition> WHERE, boolean SHOW_SQL) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
 			final boolean SHOW_SQL) throws SQLException, Exception{
 
