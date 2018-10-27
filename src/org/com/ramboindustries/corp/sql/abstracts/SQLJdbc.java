@@ -25,6 +25,8 @@ public interface SQLJdbc {
 
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException;
 	
+	public <E> E findOne (final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL) throws SQLException;
+	
 	public  <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL)  throws SQLException;
 	
 	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL) throws SQLException;

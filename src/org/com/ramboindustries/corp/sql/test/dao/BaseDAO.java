@@ -4,6 +4,7 @@ import java.sql.SQLException;
 import java.util.List;
 
 import org.com.ramboindustries.corp.sql.JDBCConnection;
+import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.test.entity.BaseEntity;
 
@@ -40,6 +41,10 @@ public class BaseDAO<E extends BaseEntity> {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+	
+	public E find(Class<E> clazz, List<SQLWhereCondition> where) throws SQLException {
+		return jdbc.findOne(clazz, where, SHOW_SQL);
 	}
 
 }

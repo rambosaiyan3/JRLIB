@@ -40,17 +40,24 @@ public final class JDBCConnection implements SQLJdbc {
 
 	private final SQLLogger SQL_LOGGER = new SQLLogger();
 
-	public JDBCConnection(String URL, String USER, String PASS) {
+	public JDBCConnection(final String URL, final String USER, final String PASS) {
 		this.URL = URL;
 		this.USER = USER;
 		this.PASS = PASS;
+		SQL_SCRIPTS = new SQLScripts();
+	}
+	
+	public JDBCConnection(final String [] ACCESS) {
+		this.URL = ACCESS[0];
+		this.USER = ACCESS[1];
+		this.PASS = ACCESS[2];
 		SQL_SCRIPTS = new SQLScripts();
 	}
 
 	@Override
 	public void openConnection() throws SQLException {
 		connection = DriverManager.getConnection(URL, USER, PASS);
-		// enable to use commit and roolback
+		// enable to use commit and rollback
 		connection.setAutoCommit(false);
 	}
 
@@ -116,7 +123,39 @@ public final class JDBCConnection implements SQLJdbc {
 			throw new SQLException(e);
 		}
 	}
+	
+	
+	@Override
+	public <E> E findOne(Class<E> CLAZZ, List<SQLWhereCondition> WHERE, boolean SHOW_SQL) throws SQLException {
 
+		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, WHERE);
+		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		
+		try {	
+
+			// Gets all the fields from class
+			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
+
+			// Creates the resultSet
+			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			
+			RESULT_SET.next();
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			if (result == null) {
+				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			}
+			return result;
+		} catch (SQLNotFoundException | SQLIdentifierException e) {
+			throw e;
+		} catch (SQLException e) {
+			SQL_LOGGER.showException(SCRIPT);
+			throw new SQLException(e);
+		} catch (Exception e) {
+			throw new SQLException(e);
+		}
+		
+	}
+	
 	/**
 	 * Simple SELECT * FROM TABLE
 	 * 
@@ -474,7 +513,6 @@ public final class JDBCConnection implements SQLJdbc {
 		return object;
 	}
 
-
-
 	
+
 }
