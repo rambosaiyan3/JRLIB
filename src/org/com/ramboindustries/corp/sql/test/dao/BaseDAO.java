@@ -8,6 +8,8 @@ import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
 import org.com.ramboindustries.corp.sql.test.entity.BaseEntity;
 
+import sun.security.jca.JCAUtil;
+
 public class BaseDAO<E extends BaseEntity> {
 
 	private final String DATABASE = "sistema";
@@ -42,6 +44,16 @@ public class BaseDAO<E extends BaseEntity> {
 			//jdbc.rollback();
 			e.printStackTrace();
 		}
+	}
+	
+	public void update(E object, SQLWhereCondition where) throws Exception {
+		jdbc.mergeObject(object, where, SHOW_SQL);
+		jdbc.commit();
+	}
+	
+	public void update(E object, List<SQLWhereCondition> where) throws Exception {
+		jdbc.mergeObject(object, where, SHOW_SQL);
+		jdbc.commit();
 	}
 	
 	public E find(Class<E> clazz, List<SQLWhereCondition> where) throws SQLException {

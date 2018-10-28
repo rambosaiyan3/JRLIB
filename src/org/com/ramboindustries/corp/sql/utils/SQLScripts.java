@@ -34,6 +34,11 @@ public class SQLScripts {
 	 */
 	public <E> String createSQLInsertScript(final E OBJECT) throws Exception {
 		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		
+		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when insert
+		// we do not need the primary key of the table when inserting or updating
+		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
+		
 		StringBuilder columns = new StringBuilder(" ( ");
 		StringBuilder values = new StringBuilder(" ( ");
 		map.forEach((column, value) -> {
@@ -56,10 +61,16 @@ public class SQLScripts {
 	 * @throws IllegalArgumentException
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
+	 * @throws SQLIdentifierException 
 	 */
-	public <E> String createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
+	public <E> String createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLIdentifierException {
 		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
 		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		
+		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
+		// we do not need the primary key of the table when inserting or updating
+		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
+		
 		map.forEach((column, value) -> {
 			sql.append(column + " = " + value + ", ");
 		});
@@ -68,7 +79,21 @@ public class SQLScripts {
 		return sql.toString();
 	}
 	
-	
+	public <E> String createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
+		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		
+		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
+		// we do not need the primary key of the table when inserting or updating
+		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
+				
+		map.forEach((column, value) -> {
+			sql.append(column + " = " + value + ", ");
+		});
+		sql.delete(sql.lastIndexOf(","), sql.length());
+		sql.append(SQLUtils.createWhereCondition(WHERE));
+		return sql.toString();
+	}
 	
 	/**
 	 * Creates a dynamic SQL Table as a class argument

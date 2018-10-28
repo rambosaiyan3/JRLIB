@@ -25,6 +25,18 @@ public final class SQLLogger {
 		System.out.println(this.countSpaces(INIT + SQL) + END);
 	}
 	
+	public void showDropTableScript(final String SQL) {
+		System.out.println("  INIT PROCESS TO DROP TABLE > > > > > ");
+		System.out.println(SQL);
+		System.out.println(" < < < < < TABLE DROPPED! \n");
+	}
+	
+	public void showCreateTableScript(final String SQL) {
+		System.out.println(" INIT PROCESS TO CREATE A NEW TABLE > > > > >");
+		System.out.println(SQL);
+		System.out.println(" < < < < < A NEW TABLE WAS SUCCESSFULLY CREATED!\n ");
+	}
+	
 	public void showException(final String SQL) {
 		System.out.println(ERROR + SQL + " < < < < <");
 	}

@@ -336,11 +336,11 @@ public final class JDBCConnection implements SQLJdbc {
 			if (CLAZZ.getAnnotation(SQLTable.class).dropTableIfExists()) {
 				dropTable = SQL_SCRIPTS.createSQLDropTableScript(CLAZZ);
 				if (SHOW_SQL) {
-					SQL_LOGGER.showScript(dropTable);
+					SQL_LOGGER.showDropTableScript(dropTable);
 				}
 			}
 			if (SHOW_SQL) {
-				SQL_LOGGER.showScript(CREATE_TABLE);
+				SQL_LOGGER.showCreateTableScript(CREATE_TABLE);
 			}
 			if (dropTable != null) {
 				// if the table exists, it will be dropped
@@ -378,17 +378,54 @@ public final class JDBCConnection implements SQLJdbc {
 	/**
 	 * Merge object to database, usually at update statements
 	 */
+	@SuppressWarnings("unchecked")
 	@Override
 	public <E> E mergeObject(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
 		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
-		//TODO
-		return null;
+		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		
+		// makes a downcast to generic class
+		Class<E> CLAZZ = (Class<E>)OBJECT.getClass();
+		
+		// we make the update
+		this.executeSQL(SCRIPT);
+		
+		// get the primary key value of the object
+		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);
+		
+		// get the name of the primary key
+		final String PRIMARY_KEY_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
+	
+		// creates a where condition to find the row that was updated
+		final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE, SQLConditionType.EQUAL);
+		
+		// return the object with all its relationships
+		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public <E> E mergeObject(E OBJECT, List<SQLWhereCondition> WHERE, boolean SHOW_SQL) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+	public <E> E mergeObject(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)throws Exception {
+		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+		// makes a downcast to generic class
+		Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
+
+		// we make the update
+		this.executeSQL(SCRIPT);
+
+		// get the primary key value of the object
+		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);
+
+		// get the name of the primary key
+		final String PRIMARY_KEY_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
+
+		// creates a where condition to find the row that was updated
+		final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE,
+				SQLConditionType.EQUAL);
+
+		// return the object with all its relationships
+		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
 	}
 
 	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
