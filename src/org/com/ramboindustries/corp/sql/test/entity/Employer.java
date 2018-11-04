@@ -17,6 +17,8 @@ public class Employer extends BaseEntity {
 	
 	@SQLForeignKey(name = "USER_ID", required = true)
 	private User user;
+	
+	private Character sexo;
 
 	public Employer() {
 	}
@@ -59,6 +61,14 @@ public class Employer extends BaseEntity {
 
 	public void setUser(User user) {
 		this.user = user;
+	}
+
+	public Character getSexo() {
+		return sexo;
+	}
+
+	public void setSexo(Character sexo) {
+		this.sexo = sexo;
 	}
 
 	
