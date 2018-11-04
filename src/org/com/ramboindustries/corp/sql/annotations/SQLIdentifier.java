@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 public @interface SQLIdentifier {
 
 	public String identifierName();
+	public String constraintName() default "";
 	
 }

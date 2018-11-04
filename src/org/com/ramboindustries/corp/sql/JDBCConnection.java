@@ -14,10 +14,10 @@ import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
-import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
+import org.com.ramboindustries.corp.sql.system.SQLSystem;
+import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
@@ -37,20 +37,23 @@ public final class JDBCConnection implements SQLJdbc {
 	private final String PASS;
 	private final SQLScripts SQL_SCRIPTS;
 	private Connection connection;
+	private SQLSystem system;
 
 	private final SQLLogger SQL_LOGGER = new SQLLogger();
 
-	public JDBCConnection(final String URL, final String USER, final String PASS) {
+	public JDBCConnection(final String URL, final String USER, final String PASS, SQLSystem system) {
 		this.URL = URL;
 		this.USER = USER;
 		this.PASS = PASS;
+		this.system = system;
 		SQL_SCRIPTS = new SQLScripts();
 	}
 	
-	public JDBCConnection(final String [] ACCESS) {
+	public JDBCConnection(final String [] ACCESS, SQLSystem system) {
 		this.URL = ACCESS[0];
 		this.USER = ACCESS[1];
 		this.PASS = ACCESS[2];
+		this.system = system;
 		SQL_SCRIPTS = new SQLScripts();
 	}
 
@@ -107,15 +110,12 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-			
-			RESULT_SET.next();
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-			if (result == null) {
-				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			if(!RESULT_SET.next()) {
+				// if no result was found
+				return null;
 			}
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
-		} catch (SQLNotFoundException | SQLIdentifierException e) {
-			throw e;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
 			throw new SQLException(e);
@@ -138,15 +138,12 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-			
-			RESULT_SET.next();
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-			if (result == null) {
-				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			if(!RESULT_SET.next()) {
+				// no result found
+				return null;
 			}
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
-		} catch (SQLNotFoundException | SQLIdentifierException e) {
-			throw e;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
 			throw new SQLException(e);
@@ -329,7 +326,7 @@ public final class JDBCConnection implements SQLJdbc {
 	@Override
 	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
 		if (CLAZZ.isAnnotationPresent(SQLTable.class)) {
-			final String CREATE_TABLE = SQL_SCRIPTS.createSQLTableScript(CLAZZ);
+			final String CREATE_TABLE = SQL_SCRIPTS.createSQLTableScript(CLAZZ, system);
 			String dropTable = null;
 
 			// if the Class has to drop the table

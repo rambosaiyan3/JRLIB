@@ -12,7 +12,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import org.com.ramboindustries.corp.sql.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
@@ -20,6 +19,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 
 /**
  * @author kernelpanic_r
