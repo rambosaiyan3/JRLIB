@@ -14,8 +14,6 @@ import org.com.ramboindustries.corp.sql.abstracts.SQLJdbc;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
-import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-import org.com.ramboindustries.corp.sql.exceptions.SQLNotFoundException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
@@ -107,15 +105,12 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-			
-			RESULT_SET.next();
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-			if (result == null) {
-				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			if(!RESULT_SET.next()) {
+				// if no result was found
+				return null;
 			}
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
-		} catch (SQLNotFoundException | SQLIdentifierException e) {
-			throw e;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
 			throw new SQLException(e);
@@ -138,15 +133,12 @@ public final class JDBCConnection implements SQLJdbc {
 
 			// Creates the resultSet
 			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-			
-			RESULT_SET.next();
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
-			if (result == null) {
-				throw new SQLNotFoundException("Was not possible to find the object with your query:" + SCRIPT );
+			if(!RESULT_SET.next()) {
+				// no result found
+				return null;
 			}
+			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
-		} catch (SQLNotFoundException | SQLIdentifierException e) {
-			throw e;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
 			throw new SQLException(e);
