@@ -127,9 +127,7 @@ public class SQLScripts {
 				// that has an object that represents another table
 				if (field.isAnnotationPresent(SQLForeignKey.class)) {
 					// we create and add a constraint line to it
-					foreignConstraints.add(SQLUtils.createForeignKeyConstraint(
-							("FK_" + SQLUtils.getTableName(clazz) + "_" + SQLUtils.getTableName(field.getType())), field,
-							field.getType()));
+					foreignConstraints.add(SQLUtils.createForeignKeyConstraint(field, clazz));
 				}
 				// creates a sql line
 				sql.append(SQLClassHelper.attributeToSQLColumn(field, SYSTEM));
@@ -138,7 +136,7 @@ public class SQLScripts {
 		}
 
 		if (primaryKey != null) {
-			sql.append(SQLUtils.createPrimaryKeyConstraint("PK_" + SQLUtils.getTableName(clazz), primaryKey, clazz));
+			sql.append(SQLUtils.createPrimaryKeyConstraint(primaryKey, clazz));
 			sql.append(",\n");
 		}
 

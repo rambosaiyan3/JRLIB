@@ -94,13 +94,14 @@ public final class SQLUtils {
 	 * @param field      the field that is the primary key
 	 * @return a String that contains the line
 	 */
-	protected static String createPrimaryKeyConstraint(String constraint, Field field, Class<?> clazz) {
+	protected static String createPrimaryKeyConstraint(Field field, Class<?> clazz) {
+		final String CONSTRAINT = SQLUtils.createPKConstraintName(field, clazz);
 		String name = null;
 		if (clazz.isAnnotationPresent(SQLInheritancePK.class))
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		else
 			name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		return SQLDataDefinition.CONSTRAINT + " " + constraint + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
+		return SQLDataDefinition.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
 	}
 
 	/**
@@ -111,18 +112,19 @@ public final class SQLUtils {
 	 * @param clazzReferenced class that has the primary key
 	 * @return a String that contains the line
 	 */
-	protected static String createForeignKeyConstraint(String constraint, Field field, Class<?> clazzReferenced) {
+	protected static String createForeignKeyConstraint(Field field, final Class<?> CLAZZ) {
+		final String CONSTRAINT = SQLUtils.createFKConstraintName(field, CLAZZ); 
 		String fieldReferenced = null;
-		if (clazzReferenced.isAnnotationPresent(SQLInheritancePK.class)) {
+		if (field.getType().isAnnotationPresent(SQLInheritancePK.class)) {
 			// if the class has this annotation
-			fieldReferenced = clazzReferenced.getAnnotation(SQLInheritancePK.class).primaryKeyName();
+			fieldReferenced = field.getType().getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		} else {
-			fieldReferenced = SQLClassHelper.getPrimaryKey(clazzReferenced).getAnnotation(SQLIdentifier.class)
+			fieldReferenced = SQLClassHelper.getPrimaryKey(field.getType()).getAnnotation(SQLIdentifier.class)
 					.identifierName();
 		}
-		return SQLDataDefinition.CONSTRAINT + constraint + SQLDataDefinition.FOREIGN_KEY + "("
+		return SQLDataDefinition.CONSTRAINT + CONSTRAINT + SQLDataDefinition.FOREIGN_KEY + "("
 				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinition.REFERENCES
-				+ getTableName(clazzReferenced) + "(" + fieldReferenced + ")";
+				+ getTableName(field.getType()) + "(" + fieldReferenced + ")";
 	}
 
 	public static List<Field> allFieldsToTable(Class<?> clazz) throws SQLIdentifierException {
@@ -257,5 +259,32 @@ public final class SQLUtils {
 		return SQLUtils.getColumnNameFromField(field);
 
 	}
-
+	
+	private static String createFKConstraintName(final Field FIELD, final Class<?> CLAZZ) {
+		// we will call it only if it is a foreign key
+		final String CONSTRAINT = FIELD.getAnnotation(SQLForeignKey.class).constraintName().trim();
+		if(!CONSTRAINT.isEmpty()) 
+			// if the user manually set a constraint name
+			return CONSTRAINT;
+		else 
+			// if the user does not set a constraint
+			// so, we set it here
+			return "FK_" + SQLUtils.getTableName(CLAZZ) + "_" + SQLUtils.getTableName(FIELD.getType());
+	}
+	
+	private static String createPKConstraintName(final Field FIELD, final Class<?> CLAZZ) {
+		String constraint = null;
+		if(CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) 
+			// if the class is inheritance an ID, and has the SQLInheritance annotation
+			constraint = CLAZZ.getAnnotation(SQLInheritancePK.class).constraintName().trim();
+		else 
+			// the class is inheritance an ID, but does not has the SQLInheritance annotation
+			constraint = FIELD.getAnnotation(SQLIdentifier.class).constraintName().trim();
+		if(!constraint.isEmpty()) 
+			// the user set a constraint name
+			return constraint;
+		// the user does not set a constraint name
+		else return "PK_" + SQLUtils.getTableName(CLAZZ);
+	}
+	
 }
