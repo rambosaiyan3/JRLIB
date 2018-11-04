@@ -11,7 +11,9 @@ public enum SQLMySqlType {
 	DOUBLE("DOUBLE "),
 	STRING("VARCHAR ", 10),
 	BOOLEAN("BOOLEAN "),
-	DATE("DATE ");
+	DATE("DATE "),	
+	LOCALDATE("DATE"),
+	LOCALTIME("DATEIME");
 
 	private SQLMySqlType(String sqlType, Integer defaultSize) {
 		this.sqlType = sqlType;

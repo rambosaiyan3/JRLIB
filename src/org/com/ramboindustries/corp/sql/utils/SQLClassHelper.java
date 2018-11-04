@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql;
+package org.com.ramboindustries.corp.sql.utils;
 
 import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
@@ -26,9 +26,10 @@ public class SQLClassHelper {
 	 */	
 	public static String attributeToSQLColumn(Field field) {
 
-		// return the type, ie INT, VARCHAR, etc..
+		// return the type converted do database type, ie INT, VARCHAR, etc..
 		SQLMySqlType type = SQLMySqlType.getSqlType(field.getType());
 
+		// if the field is a normal column
 		if (field.isAnnotationPresent(SQLColumn.class)) {
 			SQLColumn column = field.getAnnotation(SQLColumn.class);
 
@@ -132,5 +133,18 @@ public class SQLClassHelper {
 		return attributeToSQLColumn(field);
 
 	}
+	
+	
+	private static String transformJavaFieldToSqlColumn(Field field) {
+		SQLMySqlType sqlType = SQLMySqlType.getSqlType(field.getType());
+		
+		
+		if(field.getType().isAssignableFrom(Boolean.class)) {
+			
+		}
+		return null;
+	}
+	
+	
 
 }

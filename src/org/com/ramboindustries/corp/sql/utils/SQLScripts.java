@@ -7,7 +7,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import org.com.ramboindustries.corp.sql.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
@@ -152,7 +151,7 @@ public class SQLScripts {
 	}
 	
 	/**
-	 * Generates an dinamic script to drop the table
+	 * Generates an dynamic script to drop the table
 	 * @param CLAZZ
 	 * @return
 	 */

@@ -15,7 +15,7 @@ public class Employer extends BaseEntity {
 	@SQLColumn(name = "EMAIL", length = 32, required = true)
 	private String email;
 	
-	@SQLForeignKey(name = "USER_ID", classReferenced = User.class, required = true)
+	@SQLForeignKey(name = "USER_ID", required = true)
 	private User user;
 
 	public Employer() {

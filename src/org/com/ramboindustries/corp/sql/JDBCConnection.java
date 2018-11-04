@@ -16,6 +16,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
+import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;

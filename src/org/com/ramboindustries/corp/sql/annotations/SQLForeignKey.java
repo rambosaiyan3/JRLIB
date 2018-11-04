@@ -9,8 +9,7 @@ import java.lang.annotation.Target;
 @Target({ ElementType.FIELD })
 public @interface SQLForeignKey {
 
-	public Class<?> classReferenced();
 	public String name();
 	public boolean required() default false;
-	
+	public String constraintName() default "";
 }
