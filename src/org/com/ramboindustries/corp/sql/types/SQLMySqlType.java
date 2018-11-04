@@ -1,48 +1,132 @@
 package org.com.ramboindustries.corp.sql.types;
 
-public enum SQLMySqlType {
-	
-	BYTE("TINYINT "),
-	SHORT("SMALLINT "),
-	INT("INT "),
-	LONG("BIGINT "),
-	DECIMAl("DECIMAL "),
-	FLOAT("FLOAT "),
-	DOUBLE("DOUBLE "),
-	STRING("VARCHAR ", 10),
-	BOOLEAN("BOOLEAN "),
-	DATE("DATE "),	
-	LOCALDATE("DATE"),
-	LOCALTIME("DATEIME");
+import java.math.BigDecimal;
+import java.util.Date;
 
-	private SQLMySqlType(String sqlType, Integer defaultSize) {
-		this.sqlType = sqlType;
-		this.defaultSize = defaultSize;
+public enum SQLMySqlType implements SQLType {
+	
+	BYTE(Byte.class) {
+		@Override
+		public String getSqlType() {
+			return "TINYINT";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	SHORT(Short.class) {
+		@Override
+		public String getSqlType() {
+			return "SMALLINT";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	INT(Integer.class) {
+		@Override
+		public String getSqlType() {
+			return "INT";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	LONG(Long.class){
+		@Override
+		public String getSqlType() {
+			return "BIGINT";
+		}
+		 @Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	FLOAT(Float.class) {
+		@Override
+		public String getSqlType() {
+			return "FLOAT";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	DECIMAL(BigDecimal.class) {
+		@Override
+		public String getSqlType() {
+			return "DECIMAL";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	DOUBLE(Double.class) {
+		@Override
+		public String getSqlType() {
+			return "DOUBLE";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	STRING(String.class) {
+		@Override
+		public String getSqlType() {
+			return "VARCHAR";
+		}
+		@Override
+		public Integer defaultSize() {
+			return 32;
+		}
+	},
+	CHAR(Character.class){
+		@Override
+		public String getSqlType() {
+			return "CHAR";
+		}
+		@Override
+		public Integer defaultSize() {
+			return 3;
+		}
+		
+	},
+	BOOLEAN(Boolean.class) {
+		@Override
+		public String getSqlType() {
+			return "BOOLEAN";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	},
+	DATE(Date.class) {
+		@Override
+		public String getSqlType() {
+			return "DATE";
+		}
+		@Override
+		public Integer defaultSize() {
+			return null;
+		}
+	};
+	
+	private SQLMySqlType(Class<?> clazz) {
+		this.clazz = clazz;
 	}
 	
-	private SQLMySqlType(String sqlType) {
-		this.sqlType = sqlType;
-	}
-
-	private String sqlType;
-	private Integer defaultSize;
+	private  Class<?> clazz;
 	
-
-	public String getSqlType() {
-		return sqlType;
-	}
-	
-	public Integer getDefaultSize() {
-		return defaultSize;
-	}
 	
 	public static SQLMySqlType getSqlType(Class<?> clazz) {
-		String sql = clazz.getSimpleName();
-		sql = sql.toUpperCase();
-		for(SQLMySqlType type : SQLMySqlType.values()) {
-			if(type.name().equals(sql)) return type;
-		}
+		for(SQLMySqlType type : SQLMySqlType.values())
+			if(type.clazz.equals(clazz)) return type;
 		return null;
 	}
-	
 }

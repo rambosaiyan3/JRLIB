@@ -3,14 +3,15 @@ package org.com.ramboindustries.corp.sql.utils;
 import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
-import java.util.Date;
 
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
+import org.com.ramboindustries.corp.sql.system.SQLSystem;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
+import org.com.ramboindustries.corp.sql.types.SQLType;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -19,61 +20,15 @@ import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
  */
 public class SQLClassHelper {
 
+	
 	/**
 	 * Convert an attribute to a column of SQL
+	 * 
 	 * @param field that will be converted to column
 	 * @return a string that represents the column
-	 */	
-	public static String attributeToSQLColumn(Field field) {
-
-		// return the type converted do database type, ie INT, VARCHAR, etc..
-		SQLMySqlType type = SQLMySqlType.getSqlType(field.getType());
-
-		// if the field is a normal column
-		if (field.isAnnotationPresent(SQLColumn.class)) {
-			SQLColumn column = field.getAnnotation(SQLColumn.class);
-
-			if (field.getType() != Boolean.class && field.getType() != Date.class) {
-
-				if (field.getType() == String.class) {
-					String sqltype = type.getSqlType().substring(0, type.getSqlType().length() - 1);
-					return column.name() + " " + sqltype + "(" + column.length() + ") "
-							+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
-				} else {
-					return column.name() + " " + type.getSqlType()
-							+ (column.required() ? SQLDataDefinition.NOT_NULL : " ");
-				}
-			}
-
-			return column.name() + " " + type.getSqlType() + (column.required() ? SQLDataDefinition.NOT_NULL : "");
-
-		} else if (field.isAnnotationPresent(SQLIdentifier.class)) {
-
-			return field.getAnnotation(SQLIdentifier.class).identifierName() + " " + type.getSqlType()
-					+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
-
-		} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
-
-			// because this field references another object
-			// so, we will get the type of the PK of it
-
-			SQLForeignKey foreign = field.getAnnotation(SQLForeignKey.class);
-			Field fk = getPrimaryKey(field.getType());
-			type = SQLMySqlType.getSqlType(fk.getType());
-			return foreign.name() + " " + type.getSqlType() + (foreign.required() ? SQLDataDefinition.NOT_NULL : "");
-
-		} else {
-			// the class does not have a SQL annotation
-			String sqlType = type.getSqlType().substring(0, type.getSqlType().length() - 1);
-			if (!field.getType().isAssignableFrom(Boolean.class) && !field.getType().isAssignableFrom(Date.class)) {
-				if (field.getType().isAssignableFrom(String.class)) {
-					return field.getName() + " " + sqlType + "(" + type.getDefaultSize() + ")";
-				} else {
-					return field.getName() + " " + sqlType;
-				}
-			}
-			return field.getName() + " " + sqlType;
-		}
+	 */
+	public static String attributeToSQLColumn(final Field FIELD, final SQLSystem SYSTEM) {
+		return SQLClassHelper.transformJavaFieldToSqlColumn(FIELD, SYSTEM);
 	}
 
 	/**
@@ -90,7 +45,7 @@ public class SQLClassHelper {
 			}
 		}
 		// if the Primary key was not found, we can call it recursively
-		if(CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
+		if (CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
 			return SQLClassHelper.getPrimaryKey(CLAZZ.getSuperclass());
 		}
 		return null;
@@ -99,10 +54,10 @@ public class SQLClassHelper {
 	@SuppressWarnings("unchecked")
 	public static <E, V> V getPrimaryKeyValue(E object)
 			throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException {
-		if(object == null){
+		if (object == null) {
 			return null;
 		}
-		
+
 		Field field = getPrimaryKey(object.getClass());
 		// if the class does not have an PK
 		if (field == null) {
@@ -119,32 +74,112 @@ public class SQLClassHelper {
 	 * @param clazz
 	 * @return
 	 */
-	public static String attributeToSQLColumn(Field field, Class<?> clazz) {
+	public static String attributeToSQLColumn(Field field, Class<?> clazz, final SQLSystem SYSTEM) {
 		if (field.isAnnotationPresent(SQLIdentifier.class) && clazz.isAnnotationPresent(SQLInheritancePK.class)) {
-			SQLMySqlType type = SQLMySqlType.getSqlType(field.getType());
-			if (!field.getType().isAssignableFrom(Date.class) && !field.getType().isAssignableFrom(Boolean.class)) {
-				return clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName() + " " + type.getSqlType()
-						+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
-			}
-
-			return clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName() + " " + type.getSqlType()
-					+ SQLDataDefinition.NOT_NULL + SQLDataDefinition.AUTO_INCREMENT;
+			SQLInheritancePK COLUMN = clazz.getAnnotation(SQLInheritancePK.class);
+			// set the enum used by user
+			SQLType type = SQLClassHelper.setSQLEnum(SYSTEM, field.getType());
+			return SQLClassHelper.createPrimaryKeyColumn(COLUMN, type);
 		}
-		return attributeToSQLColumn(field);
+		return SQLClassHelper.attributeToSQLColumn(field, SYSTEM);
 
 	}
-	
-	
-	private static String transformJavaFieldToSqlColumn(Field field) {
-		SQLMySqlType sqlType = SQLMySqlType.getSqlType(field.getType());
+
+	private static String transformJavaFieldToSqlColumn(final Field FIELD, final SQLSystem SYSTEM) {
 		
+		// set the enum used
+		SQLType sqlType = SQLClassHelper.setSQLEnum(SYSTEM, FIELD.getType());
 		
-		if(field.getType().isAssignableFrom(Boolean.class)) {
-			
+		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
+
+			final SQLIdentifier COLUMN = FIELD.getAnnotation(SQLIdentifier.class);
+			return SQLClassHelper.createPrimaryKeyColumn(COLUMN, sqlType);
+
+		} else if (FIELD.isAnnotationPresent(SQLColumn.class)) {
+
+			final SQLColumn COLUMN = FIELD.getAnnotation(SQLColumn.class);
+
+			// like the field is a String we need to set the length
+			if (FIELD.getType().isAssignableFrom(String.class))
+				// like the column is VARCHAR, we need to set the length of it
+				return SQLClassHelper.createColumn(COLUMN, sqlType, true);
+			else
+				return SQLClassHelper.createColumn(COLUMN, sqlType, false);
+
+		} else if (FIELD.isAnnotationPresent(SQLForeignKey.class)) {
+
+			final SQLForeignKey COLUMN = FIELD.getAnnotation(SQLForeignKey.class);
+			// get the field that represents the primary key of the foreign key field
+			final Field FOREIGN_KEY = SQLClassHelper.getPrimaryKey(FIELD.getType());
+			sqlType = SQLMySqlType.getSqlType(FOREIGN_KEY.getType());
+			return SQLClassHelper.createForeignKeyColumn(COLUMN, sqlType);
+
+		} else {
+			if (FIELD.getType().isAssignableFrom(String.class) || FIELD.getType().isAssignableFrom(Character.class))
+				return SQLClassHelper.createColumn(FIELD, sqlType, true);
+			else
+				return SQLClassHelper.createColumn(FIELD, sqlType, false);
+
+		}
+	}
+
+	// verifies if the column can be null
+	private static String isColumnRequired(final SQLColumn COLUMN) {
+		return COLUMN.required() ? SQLDataDefinition.NOT_NULL : "";
+	}
+
+	// verifies if the foreign can be optional
+	private static String isColumnRequired(final SQLForeignKey FOREIGN_KEY) {
+		return FOREIGN_KEY.required() ? SQLDataDefinition.NOT_NULL : "";
+	}
+
+	// set the column length
+	private static String setColumnLength(final SQLColumn COLUMN) {
+		return "(" + COLUMN.length() + ")";
+	}
+
+	private static String createPrimaryKeyColumn(final SQLIdentifier PRIMARY_KEY, final SQLType SQL_TYPE) {
+		if(SQL_TYPE instanceof SQLMySqlType) {
+ 		return PRIMARY_KEY.identifierName() + " " + SQL_TYPE.getSqlType() + " " + SQLDataDefinition.NOT_NULL
+				+ SQLDataDefinition.AUTO_INCREMENT;
+		} return null;
+	}
+
+	private static String createForeignKeyColumn(final SQLForeignKey FOREIGN_KEY, final SQLType SQL_TYPE) {
+		return FOREIGN_KEY.name() + " " + SQL_TYPE.getSqlType() + " " + SQLClassHelper.isColumnRequired(FOREIGN_KEY);
+	}
+
+	private static String createColumn(final SQLColumn COLUMN, final SQLType SQL_TYPE, boolean isLength) {
+		if (isLength)
+			return COLUMN.name() + " " + SQL_TYPE.getSqlType()+ SQLClassHelper.setColumnLength(COLUMN) + " "
+					+ SQLClassHelper.isColumnRequired(COLUMN);
+		return COLUMN.name() + " " + SQL_TYPE.getSqlType() + " " + SQLClassHelper.isColumnRequired(COLUMN);
+	}
+
+	private static String createPrimaryKeyColumn(final SQLInheritancePK PRIMARY_KEY, final SQLType SQL_TYPE) {
+		if (SQL_TYPE instanceof SQLMySqlType) {
+			return PRIMARY_KEY.primaryKeyName() + " " + SQL_TYPE.getSqlType() + " " + SQLDataDefinition.NOT_NULL
+					+ SQLDataDefinition.AUTO_INCREMENT;
 		}
 		return null;
 	}
 	
-	
+	private static String createColumn(final Field FIELD, final SQLType SQL_TYPE, boolean isLength) {
+		if (isLength)
+			return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType() + "( " + SQL_TYPE.defaultSize() + ")";
+		return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType();
+	}
 
+	/*
+	 * Set the SQLType used by the user
+	 */
+	private static SQLType setSQLEnum(final SQLSystem SYSTEM, final Class<?> CLAZZ) {
+		switch (SYSTEM) {
+		case MY_SQL:
+			return SQLMySqlType.getSqlType(CLAZZ);
+		default:
+			return null;
+		}
+	}
+	
 }

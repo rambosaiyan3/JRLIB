@@ -10,5 +10,6 @@ import java.lang.annotation.Target;
 public @interface SQLInheritancePK {
 
 	public String primaryKeyName();
+	public String constraintName() default "";
 	
 }

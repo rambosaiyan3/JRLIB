@@ -13,6 +13,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.sql.system.SQLSystem;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -101,7 +102,7 @@ public class SQLScripts {
 	 * @return
 	 * @throws SQLIdentifierException
 	 */
-	public String createSQLTableScript(Class<?> clazz) throws SQLIdentifierException {
+	public String createSQLTableScript(Class<?> clazz, final SQLSystem SYSTEM) throws SQLIdentifierException {
 		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
@@ -114,7 +115,7 @@ public class SQLScripts {
 		fields.remove(0);
 
 		// if the clazz has the SQLInheritancePK it will get the name
-		sql.append(SQLClassHelper.attributeToSQLColumn(primaryKey, clazz));
+		sql.append(SQLClassHelper.attributeToSQLColumn(primaryKey, clazz, SYSTEM));
 		sql.append(",\n");
 
 		// list that will have the foreign key constraints
@@ -131,7 +132,7 @@ public class SQLScripts {
 							field.getType()));
 				}
 				// creates a sql line
-				sql.append(SQLClassHelper.attributeToSQLColumn(field));
+				sql.append(SQLClassHelper.attributeToSQLColumn(field, SYSTEM));
 				sql.append(",\n");
 			}
 		}
