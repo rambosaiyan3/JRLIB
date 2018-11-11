@@ -45,7 +45,9 @@ public final class SQLUtils {
 		} else if (value instanceof java.time.LocalDateTime) {
 			java.sql.Date date = java.sql.Date.valueOf(((java.time.LocalDateTime) value).toLocalDate());
 			return "'" + date.toString() + "'";
-		} else {
+		} else  if (value instanceof Character) {
+			return "'"+ value + "'";
+		}else {
 			return value.toString();
 		}
 		}
@@ -250,6 +252,10 @@ public final class SQLUtils {
 			return date != null ? date.toLocalDate() : null;
 		case LOCAL_TIME:
 			return null;
+		case LOCAL_DATE_TIME: 
+			clazz = java.sql.Timestamp.class;
+			java.sql.Timestamp dateTime = (java.sql.Timestamp) clazz.cast(resultSet.getTimestamp(name));
+			return dateTime != null ? dateTime.toLocalDateTime() : null;
 		default:
 			return null;
 		}

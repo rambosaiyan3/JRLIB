@@ -40,11 +40,15 @@ public class MainTest {
 		employer.setEmail("matheus");
 		employer.setUser(user);
 		employer.setName("ddaa");
+		employer.setSexo('M');
+		employer.setDate33(LocalDateTime.now());
+		employer.setDate1(LocalDate.now());
 		
 		BaseDAO da1 = new EmployerDAO();
 		employer = da1.save(employer);
 		System.out.println(employer.getId());
-		System.out.println(employer.getUser());
+		System.out.println(employer.getUser().getDate33());
+		System.out.println(employer.getDate33());
 		
 		
 		
