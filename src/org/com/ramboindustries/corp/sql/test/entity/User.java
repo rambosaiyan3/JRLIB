@@ -1,5 +1,7 @@
 package org.com.ramboindustries.corp.sql.test.entity;
 
+import java.math.BigDecimal;
+
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
@@ -16,6 +18,10 @@ public class User extends BaseEntity{
 
 	@SQLColumn(name = "PASSWORD", required = true, length = 32)
 	private String password;
+	
+	private BigDecimal salary;
+	private Double salary1;
+	private Float salary2;
 	
 	public User() {
 		
@@ -59,6 +65,30 @@ public class User extends BaseEntity{
 
 	public void setPassword(String password) {
 		this.password = password;
+	}
+
+	public BigDecimal getSalary() {
+		return salary;
+	}
+
+	public void setSalary(BigDecimal salary) {
+		this.salary = salary;
+	}
+
+	public Double getSalary1() {
+		return salary1;
+	}
+
+	public void setSalary1(Double salary1) {
+		this.salary1 = salary1;
+	}
+
+	public Float getSalary2() {
+		return salary2;
+	}
+
+	public void setSalary2(Float salary2) {
+		this.salary2 = salary2;
 	}
 
 	

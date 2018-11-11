@@ -217,10 +217,10 @@ public final class SQLUtils {
 	 * @throws SQLException
 	 */
 	public static Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
-		org.com.ramboindustries.corp.text.Type type = org.com.ramboindustries.corp.text.Type.getTypeByName(clazz.getSimpleName());
+		org.com.ramboindustries.corp.text.TypeClass type = org.com.ramboindustries.corp.text.TypeClass.getTypeByName(clazz.getSimpleName());
 		if (type == null) {
 			Field field = SQLClassHelper.getPrimaryKey(clazz);
-			type = org.com.ramboindustries.corp.text.Type.getTypeByName(field.getType().getSimpleName());
+			type = org.com.ramboindustries.corp.text.TypeClass.getTypeByName(field.getType().getSimpleName());
 			clazz = field.getType();
 		}
 

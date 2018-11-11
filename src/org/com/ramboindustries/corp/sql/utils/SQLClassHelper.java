@@ -12,6 +12,7 @@ import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.sql.types.SQLType;
+import org.com.ramboindustries.corp.text.TypeClass;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -28,7 +29,7 @@ public class SQLClassHelper {
 	 * @return a string that represents the column
 	 */
 	public static String attributeToSQLColumn(final Field FIELD, final SQLSystem SYSTEM) {
-		return SQLClassHelper.transformJavaFieldToSqlColumn(FIELD, SYSTEM);
+		return transformJavaFieldToSqlColumn(FIELD, SYSTEM);
 	}
 
 	/**
@@ -46,7 +47,7 @@ public class SQLClassHelper {
 		}
 		// if the Primary key was not found, we can call it recursively
 		if (CLAZZ.getSuperclass() != null && !CLAZZ.getSuperclass().getName().equals(Object.class.getName())) {
-			return SQLClassHelper.getPrimaryKey(CLAZZ.getSuperclass());
+			return getPrimaryKey(CLAZZ.getSuperclass());
 		}
 		return null;
 	}
@@ -77,50 +78,20 @@ public class SQLClassHelper {
 	public static String attributeToSQLColumn(Field field, Class<?> clazz, final SQLSystem SYSTEM) {
 		if (field.isAnnotationPresent(SQLIdentifier.class) && clazz.isAnnotationPresent(SQLInheritancePK.class)) {
 			SQLInheritancePK COLUMN = clazz.getAnnotation(SQLInheritancePK.class);
-			// set the enum used by user
-			SQLType type = SQLClassHelper.setSQLEnum(SYSTEM, field.getType());
-			return SQLClassHelper.createPrimaryKeyColumn(COLUMN, type);
+			// set the ENUM used by user
+			SQLType type = setSQLEnum(SYSTEM, field.getType());
+			return createPrimaryKeyColumn(COLUMN, type);
 		}
-		return SQLClassHelper.attributeToSQLColumn(field, SYSTEM);
+		return attributeToSQLColumn(field, SYSTEM);
 
 	}
 
 	private static String transformJavaFieldToSqlColumn(final Field FIELD, final SQLSystem SYSTEM) {
 		
-		// set the enum used
-		SQLType sqlType = SQLClassHelper.setSQLEnum(SYSTEM, FIELD.getType());
+		// set the ENUM used
+		SQLType sqlType = setSQLEnum(SYSTEM, FIELD.getType());
+		return createColumnByFieldType(FIELD, sqlType); 
 		
-		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
-
-			final SQLIdentifier COLUMN = FIELD.getAnnotation(SQLIdentifier.class);
-			return SQLClassHelper.createPrimaryKeyColumn(COLUMN, sqlType);
-
-		} else if (FIELD.isAnnotationPresent(SQLColumn.class)) {
-
-			final SQLColumn COLUMN = FIELD.getAnnotation(SQLColumn.class);
-
-			// like the field is a String we need to set the length
-			if (FIELD.getType().isAssignableFrom(String.class))
-				// like the column is VARCHAR, we need to set the length of it
-				return SQLClassHelper.createColumn(COLUMN, sqlType, true);
-			else
-				return SQLClassHelper.createColumn(COLUMN, sqlType, false);
-
-		} else if (FIELD.isAnnotationPresent(SQLForeignKey.class)) {
-
-			final SQLForeignKey COLUMN = FIELD.getAnnotation(SQLForeignKey.class);
-			// get the field that represents the primary key of the foreign key field
-			final Field FOREIGN_KEY = SQLClassHelper.getPrimaryKey(FIELD.getType());
-			sqlType = SQLMySqlType.getSqlType(FOREIGN_KEY.getType());
-			return SQLClassHelper.createForeignKeyColumn(COLUMN, sqlType);
-
-		} else {
-			if (FIELD.getType().isAssignableFrom(String.class) || FIELD.getType().isAssignableFrom(Character.class))
-				return SQLClassHelper.createColumn(FIELD, sqlType, true);
-			else
-				return SQLClassHelper.createColumn(FIELD, sqlType, false);
-
-		}
 	}
 
 	// verifies if the column can be null
@@ -137,6 +108,10 @@ public class SQLClassHelper {
 	private static String setColumnLength(final SQLColumn COLUMN) {
 		return "(" + COLUMN.length() + ")";
 	}
+	
+	private static String setColumnLengthPrecision(final SQLColumn COLUMN) {
+		return "(" + COLUMN.length() + "," + COLUMN.precision() + ")";
+	}
 
 	private static String createPrimaryKeyColumn(final SQLIdentifier PRIMARY_KEY, final SQLType SQL_TYPE) {
 		if(SQL_TYPE instanceof SQLMySqlType) {
@@ -146,14 +121,14 @@ public class SQLClassHelper {
 	}
 
 	private static String createForeignKeyColumn(final SQLForeignKey FOREIGN_KEY, final SQLType SQL_TYPE) {
-		return FOREIGN_KEY.name() + " " + SQL_TYPE.getSqlType() + " " + SQLClassHelper.isColumnRequired(FOREIGN_KEY);
+		return FOREIGN_KEY.name() + " " + SQL_TYPE.getSqlType() + " " + isColumnRequired(FOREIGN_KEY);
 	}
 
 	private static String createColumn(final SQLColumn COLUMN, final SQLType SQL_TYPE, boolean isLength) {
 		if (isLength)
-			return COLUMN.name() + " " + SQL_TYPE.getSqlType()+ SQLClassHelper.setColumnLength(COLUMN) + " "
-					+ SQLClassHelper.isColumnRequired(COLUMN);
-		return COLUMN.name() + " " + SQL_TYPE.getSqlType() + " " + SQLClassHelper.isColumnRequired(COLUMN);
+			return COLUMN.name() + " " + SQL_TYPE.getSqlType()+ setColumnLength(COLUMN) + " "
+					+ isColumnRequired(COLUMN);
+		return COLUMN.name() + " " + SQL_TYPE.getSqlType() + " " + isColumnRequired(COLUMN);
 	}
 
 	private static String createPrimaryKeyColumn(final SQLInheritancePK PRIMARY_KEY, final SQLType SQL_TYPE) {
@@ -161,6 +136,7 @@ public class SQLClassHelper {
 			return PRIMARY_KEY.primaryKeyName() + " " + SQL_TYPE.getSqlType() + " " + SQLDataDefinition.NOT_NULL
 					+ SQLDataDefinition.AUTO_INCREMENT;
 		}
+		// TODO
 		return null;
 	}
 	
@@ -169,7 +145,61 @@ public class SQLClassHelper {
 			return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ")";
 		return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType();
 	}
+	
+	private static String createColumnPrecision(final SQLColumn COLUMN, final SQLType SQL_TYPE) {
+			return COLUMN.name() + " " + SQL_TYPE.getSqlType()+ setColumnLengthPrecision(COLUMN) + " "
+					+ isColumnRequired(COLUMN);
+	}
+	private static String createColumnPrecision(final Field FIELD, final SQLType SQL_TYPE) {
+		return FIELD.getName() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ",2)";
+	}
+	
+	
+	private static String createColumnByFieldType(final Field FIELD,  SQLType sqlType) {
+		final String FIELD_NAME = FIELD.getType().getSimpleName();
 
+		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
+			// if the field is a PRIMARY KEY
+			return createPrimaryKeyColumn(FIELD.getAnnotation(SQLIdentifier.class),sqlType);
+		} else if (FIELD.isAnnotationPresent(SQLColumn.class)) {
+			final SQLColumn COLUMN = FIELD.getAnnotation(SQLColumn.class);
+			TypeClass TYPE = TypeClass.getTypeByName(FIELD_NAME);
+			switch (TYPE) {
+			case BIG_DECIMAL:
+			case DOUBLE:
+			case FLOAT:
+				return createColumnPrecision(COLUMN, sqlType);
+			case STRING:
+			case CHARACTER:
+				return createColumn(COLUMN, sqlType, true);
+			default:
+				// integer, long, etc ...
+				return createColumn(COLUMN, sqlType, false);
+			}
+		} else if(FIELD.isAnnotationPresent(SQLForeignKey.class)) {
+			
+			final SQLForeignKey COLUMN = FIELD.getAnnotation(SQLForeignKey.class);
+			// get the type of the primary key that references ant set to the SQL type
+			sqlType = SQLMySqlType.getSqlType(getPrimaryKey(FIELD.getType()).getType());
+			return createForeignKeyColumn(COLUMN, sqlType);
+		} else {
+			TypeClass TYPE = TypeClass.getTypeByName(FIELD_NAME);
+			switch (TYPE) {
+			case BIG_DECIMAL:
+			case DOUBLE:
+			case FLOAT:
+				return createColumnPrecision(FIELD, sqlType);
+			case STRING:
+			case CHARACTER:
+				return createColumn(FIELD, sqlType, true);
+			default:
+				 return createColumn(FIELD, sqlType, false);
+			}
+		}
+
+	}
+	
+	
 	/*
 	 * Set the SQLType used by the user
 	 */
