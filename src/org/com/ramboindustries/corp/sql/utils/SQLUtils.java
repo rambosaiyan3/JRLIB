@@ -17,8 +17,8 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
-import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
-import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
+import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
+import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
@@ -61,13 +61,13 @@ public final class SQLUtils {
 	}
 
 	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
-		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + " " + 
+		return SQLDataManipulationCons.WHERE + WHERE_CONDITION.getFieldName() + " " + 
 				WHERE_CONDITION.getConditionType().getType() + " " + convertToString(WHERE_CONDITION.getFieldValue());
 			
 	}
 
 	protected static String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
-		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
+		StringBuilder builder = new StringBuilder(" " + SQLDataManipulationCons.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( WHERE.getOperator().getOperator() + 
 					WHERE.getFieldName() + " " +
@@ -111,7 +111,7 @@ public final class SQLUtils {
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		else
 			name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		return SQLDataDefinition.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
+		return SQLDataDefinitionCons.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinitionCons.PRIMARY_KEY + "(" + name + ")";
 	}
 
 	/**
@@ -132,8 +132,8 @@ public final class SQLUtils {
 			fieldReferenced = SQLClassHelper.getPrimaryKey(field.getType()).getAnnotation(SQLIdentifier.class)
 					.identifierName();
 		}
-		return SQLDataDefinition.CONSTRAINT + CONSTRAINT + SQLDataDefinition.FOREIGN_KEY + "("
-				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinition.REFERENCES
+		return SQLDataDefinitionCons.CONSTRAINT + CONSTRAINT + SQLDataDefinitionCons.FOREIGN_KEY + "("
+				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinitionCons.REFERENCES
 				+ getTableName(field.getType()) + "(" + fieldReferenced + ")";
 	}
 
