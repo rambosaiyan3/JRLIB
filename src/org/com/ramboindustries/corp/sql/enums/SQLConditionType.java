@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql;
+package org.com.ramboindustries.corp.sql.enums;
 
 public enum SQLConditionType {
 
@@ -10,10 +10,7 @@ public enum SQLConditionType {
 	LESS_THAN(" < "),
 	GREATER_THAN_OR_EQUAL(" >= "),
 	LESS_THAN_OR_EQUAL(" <= "),
-	IN(" IN "),
-	AND(" AND "),
-	OR(" OR "),
-	NOT(" NOT ");
+	IN(" IN ");
 	
 	private String type;
 	

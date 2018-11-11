@@ -6,7 +6,7 @@ import java.util.List;
 import org.com.ramboindustries.corp.sql.JDBCConnection;
 import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLMySQLConstants;
-import org.com.ramboindustries.corp.sql.system.SQLSystem;
+import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.test.entity.BaseEntity;
 
 public class BaseDAO  {
@@ -35,13 +35,15 @@ public class BaseDAO  {
 		jdbc.commit();
 	}
 
-	public <E extends BaseEntity>  void save(E object)  {
+	public  <E extends BaseEntity>  E save(E object)  {
 		try {
-			jdbc.persistObject(object, SHOW_SQL);
+			E obj = jdbc.persistObject(object, SHOW_SQL);
 			jdbc.commit();
+			return obj;
 		} catch (Exception e) {
 			//jdbc.rollback();
 			e.printStackTrace();
+			return null;
 		}
 	}
 	

@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql.system;
+package org.com.ramboindustries.corp.sql.enums;
 
 public enum SQLSystem {
 	
