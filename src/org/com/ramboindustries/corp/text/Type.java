@@ -2,15 +2,20 @@ package org.com.ramboindustries.corp.text;
 
 public enum Type {
 
-	BYTE("Byte"),
-	SHORT("Short"),
-	INTEGER("Integer"),
-	LONG("Long"),
-	FLOAT("Float"),
-	DOUBLE("Double"),
-	BIG_DECIMAL("BigDecimal"),
-	BOOLEAN("Boolean"),
-	STRING("String");
+	BYTE(Byte.class.getSimpleName()),
+	SHORT(Short.class.getSimpleName()),
+	INTEGER(Integer.class.getSimpleName()),
+	LONG(Long.class.getSimpleName()),
+	FLOAT(Float.class.getSimpleName()),
+	DOUBLE(Double.class.getSimpleName()),
+	BIG_DECIMAL(java.math.BigDecimal.class.getSimpleName()),
+	BOOLEAN(Boolean.class.getSimpleName()),
+	STRING(String.class.getSimpleName()),
+	DATE(java.util.Date.class.getSimpleName()),
+	LOCAL_DATE(java.time.LocalDate.class.getSimpleName()),
+	LOCAL_TIME(java.time.LocalTime.class.getSimpleName()),
+	LOCAL_DATE_TIME(java.time.LocalDateTime.class.getSimpleName()),
+	CHARACTER(Character.class.getSimpleName());
 	
 	private Type(String type) {
 		this.type = type;

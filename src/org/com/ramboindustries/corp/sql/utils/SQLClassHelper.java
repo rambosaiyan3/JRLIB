@@ -9,7 +9,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
-import org.com.ramboindustries.corp.sql.system.SQLSystem;
+import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.sql.types.SQLType;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;

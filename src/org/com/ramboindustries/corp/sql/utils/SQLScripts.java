@@ -12,9 +12,11 @@ import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
+import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-import org.com.ramboindustries.corp.sql.system.SQLSystem;
-import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
+
+import static org.com.ramboindustries.corp.utils.ObjectAccessUtils.getAllFieldFromClassAndSuperClass;
+import static org.com.ramboindustries.corp.sql.utils.SQLUtils.getTableName;
 
 /**
  * Class that contain the SQLs scripts
@@ -33,7 +35,7 @@ public class SQLScripts {
 	 * @throws IntrospectionException
 	 */
 	public <E> String createSQLInsertScript(final E OBJECT) throws Exception {
-		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
+		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
 		
 		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when insert
 		// we do not need the primary key of the table when inserting or updating
@@ -49,7 +51,7 @@ public class SQLScripts {
 		columns.append(")");
 		values.delete(values.lastIndexOf(","), values.length());
 		values.append(")");
-		return SQLDataManipulation.INSERT + SQLUtils.getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
+		return SQLDataManipulation.INSERT + getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulation.VALUES + values.toString() + ";";
 	}
 	
 	/**
@@ -64,8 +66,8 @@ public class SQLScripts {
 	 * @throws SQLIdentifierException 
 	 */
 	public <E> String createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLIdentifierException {
-		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
-		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
+		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
 		
 		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
 		// we do not need the primary key of the table when inserting or updating
@@ -80,8 +82,8 @@ public class SQLScripts {
 	}
 	
 	public <E> String createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
-		Map<String, String> map = SQLUtils.mapAttributes(ObjectAccessUtils.getAllFieldFromClassAndSuperClass(OBJECT, false));
-		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + SQLUtils.getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
+		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
+		StringBuilder sql = new StringBuilder(SQLDataManipulation.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulation.SET);
 		
 		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
 		// we do not need the primary key of the table when inserting or updating
@@ -106,7 +108,7 @@ public class SQLScripts {
 		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
-		sql.append(SQLDataDefinition.CREATE_TABLE + SQLUtils.getTableName(clazz) + " (\n");
+		sql.append(SQLDataDefinition.CREATE_TABLE + getTableName(clazz) + " (\n");
 
 		// the first element will always be the 1
 		Field primaryKey = fields.get(0);
@@ -127,9 +129,7 @@ public class SQLScripts {
 				// that has an object that represents another table
 				if (field.isAnnotationPresent(SQLForeignKey.class)) {
 					// we create and add a constraint line to it
-					foreignConstraints.add(SQLUtils.createForeignKeyConstraint(
-							("FK_" + SQLUtils.getTableName(clazz) + "_" + SQLUtils.getTableName(field.getType())), field,
-							field.getType()));
+					foreignConstraints.add(SQLUtils.createForeignKeyConstraint(field, clazz));
 				}
 				// creates a sql line
 				sql.append(SQLClassHelper.attributeToSQLColumn(field, SYSTEM));
@@ -138,7 +138,7 @@ public class SQLScripts {
 		}
 
 		if (primaryKey != null) {
-			sql.append(SQLUtils.createPrimaryKeyConstraint("PK_" + SQLUtils.getTableName(clazz), primaryKey, clazz));
+			sql.append(SQLUtils.createPrimaryKeyConstraint(primaryKey, clazz));
 			sql.append(",\n");
 		}
 
@@ -157,7 +157,7 @@ public class SQLScripts {
 	 * @return
 	 */
 	public <E> String createSQLDropTableScript(final Class<E> CLAZZ) {
-		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + SQLUtils.getTableName(CLAZZ) + " ;";
+		return SQLDataDefinition.DROP_TABLE_IF_EXISTS + getTableName(CLAZZ) + " ;";
 	}
 	
 	
@@ -167,7 +167,7 @@ public class SQLScripts {
 	 * @return the SCRIPT
 	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
-		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + ";";
+		return SQLDataManipulation.SELECT_FROM + getTableName(CLAZZ) + ";";
 	}
 
 	/**
@@ -178,43 +178,43 @@ public class SQLScripts {
 	 */
 	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS) {
 		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQLUtils.getTableName(CLAZZ) + ";";
+		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + getTableName(CLAZZ) + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
-		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
+		return SQLDataManipulation.SELECT_FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS, final SQLWhereCondition WHERE) {
 		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + SQLUtils.getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE) + ";";
+		return SQLDataManipulation.SELECT + FIELDS + SQLDataManipulation.FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE) + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		final String CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulation.SELECT_FROM + SQLUtils.getTableName(CLAZZ) + CONDITIONS + ";";
+		return SQLDataManipulation.SELECT_FROM + getTableName(CLAZZ) + CONDITIONS + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS,
 			final List<SQLWhereCondition> WHERE) {
 		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
 		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulation.SELECT + FIELDS + SQLUtils.getTableName(CLAZZ) + WHERE_CONDITIONS + ";";
+		return SQLDataManipulation.SELECT + FIELDS + getTableName(CLAZZ) + WHERE_CONDITIONS + ";";
 	}
 	
 	public <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
-		return SQLDataManipulation.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulation.FROM +  SQLUtils.getTableName(CLAZZ) + ";"; 
+		return SQLDataManipulation.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulation.FROM +  getTableName(CLAZZ) + ";"; 
 	}
 	
 	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
 		final String WHERE_CONDITION = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulation.DELETE_FROM + SQLUtils.getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
+		return SQLDataManipulation.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
 	}
 	
 	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulation.DELETE_FROM + SQLUtils.getTableName(CLAZZ) + " " + WHERE_CONDITIONS + " ;";
+		return SQLDataManipulation.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITIONS + " ;";
 	}
 	
 }

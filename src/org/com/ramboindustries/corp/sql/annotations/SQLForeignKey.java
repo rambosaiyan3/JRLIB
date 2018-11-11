@@ -12,4 +12,5 @@ public @interface SQLForeignKey {
 	public String name();
 	public boolean required() default false;
 	public String constraintName() default "";
+	public boolean lazyLoad() default true;
 }
