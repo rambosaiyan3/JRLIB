@@ -1,6 +1,6 @@
 Example of use:
 
-// the BaseEntity is not a TABLE, but all classes can extend it, 
+/* the BaseEntity is not a TABLE, but all classes can extend it */
 public abstract class BaseEntity {
 
 	@SQLIdentifier(identifierName = "ID")
