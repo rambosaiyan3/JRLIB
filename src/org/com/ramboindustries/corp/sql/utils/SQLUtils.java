@@ -1,6 +1,7 @@
 package org.com.ramboindustries.corp.sql.utils;
 
 import java.lang.reflect.Field;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLJavaField;
@@ -20,6 +22,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.text.TypeClass;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -217,10 +220,10 @@ public final class SQLUtils {
 	 * @throws SQLException
 	 */
 	public static Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
-		org.com.ramboindustries.corp.text.TypeClass type = org.com.ramboindustries.corp.text.TypeClass.getTypeByName(clazz.getSimpleName());
+		TypeClass type = TypeClass.getTypeByName(clazz.getSimpleName());
 		if (type == null) {
 			Field field = SQLClassHelper.getPrimaryKey(clazz);
-			type = org.com.ramboindustries.corp.text.TypeClass.getTypeByName(field.getType().getSimpleName());
+			type = TypeClass.getTypeByName(field.getType().getSimpleName());
 			clazz = field.getType();
 		}
 
@@ -310,4 +313,77 @@ public final class SQLUtils {
 		else return "PK_" + getTableName(CLAZZ);
 	}
 	
+	public static void createPreparedStatementObject(List<Object> values, PreparedStatement statement) throws SQLException {
+		
+		byte position = 1;
+		for (Object value : values) {
+			if(Objects.isNull(value)) {
+				statement.setNull(position++, 0);
+				continue;
+			}
+			TypeClass type = TypeClass.getTypeByName(value.getClass().getSimpleName());
+			if (type == null) {
+				Field field = SQLClassHelper.getPrimaryKey(value.getClass());
+				type = TypeClass.getTypeByName(field.getType().getSimpleName());
+			}
+			switch(type) {
+			case BYTE:
+				statement.setByte(position++, (Byte) value);
+				break;
+			case SHORT:
+				statement.setShort(position++, (Short) value );
+				break;
+			case INTEGER:
+				statement.setInt(position++, (Integer) value );
+				break;
+			case LONG:
+				statement.setLong(position++, (Long) value );
+				break;
+			case FLOAT:
+				statement.setFloat(position++, (Float) value );
+				break;
+			case DOUBLE:
+				statement.setDouble(position++, (Double) value );
+				break;
+			case BIG_DECIMAL:
+				statement.setBigDecimal(position++, (java.math.BigDecimal) value );
+				break;
+			case BOOLEAN:
+				statement.setBoolean(position++, (Boolean) value );
+				break;
+			case STRING:
+				statement.setString(position++, (String) value );
+				break;
+			case DATE:
+				statement.setDate(position++, (java.sql.Date) value);
+				break;
+			case LOCAL_DATE:
+				java.sql.Date date = java.sql.Date.valueOf((java.time.LocalDate) value);
+				statement.setDate(position++, date);
+				break;
+			case LOCAL_TIME:
+				statement.setDate(position++, null);
+				break;
+			case LOCAL_DATE_TIME:
+				java.sql.Date date1 = java.sql.Date.valueOf(((java.time.LocalDateTime) value).toLocalDate());
+				statement.setDate(position++, date1);
+				break;
+			case CHARACTER:
+				String val = value !=  null ? value .toString() : null;
+				statement.setString(position++,  val);
+				break;
+			}
+		}
+	}
+	
+	/**
+	 * We do not need the identifier when update or insert data, so we remove it from list
+	 * @param sqljavaField
+	 * @param name
+	 */
+	protected static void removePrimaryKeyFromList(Set<SQLJavaField> sqljavaField, String name) {
+			sqljavaField.removeIf(item -> item.getSqlColumn().equals(name));
+	}
+
+
 }

@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -86,7 +87,7 @@ public final class JDBCConnection implements SQLJdbc {
 	public ResultSet executeSQLSelect(final String SQL) throws SQLException {
 		if (connection == null)
 			this.openConnection();
-		return connection.prepareStatement(SQL).executeQuery();
+		return connection.createStatement().executeQuery(SQL);
 	}
 
 	@Override
@@ -95,6 +96,11 @@ public final class JDBCConnection implements SQLJdbc {
 			this.openConnection();
 		connection.prepareStatement(SQL).executeUpdate();
 	}
+	
+	public void executeSQL(final PreparedStatement statement) throws SQLException {
+		statement.executeUpdate();
+	}
+	
 
 	@Override
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
@@ -300,10 +306,20 @@ public final class JDBCConnection implements SQLJdbc {
 	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws Exception {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
-		final String SCRIPT = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		
+		// return a String that contains the SQL and a List that contains the values
+		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		final String SCRIPT =  javaStatement.getSql();
+		
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		
+		// changes the ? to the real values
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
 		
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
-		this.executeSQL(SCRIPT);
+		
+		executeSQL(statement);
+		
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
 		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);

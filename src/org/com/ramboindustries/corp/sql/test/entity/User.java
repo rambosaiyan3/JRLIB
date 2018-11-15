@@ -91,6 +91,12 @@ public class User extends BaseEntity{
 		this.salary2 = salary2;
 	}
 
+	@Override
+	public String toString() {
+		return "User [name=" + name + ", login=" + login + ", password=" + password + ", salary=" + salary
+				+ ", salary1=" + salary1 + ", salary2=" + salary2 + "]";
+	}
+
 	
 	
 }

@@ -157,9 +157,13 @@ public class SQLClassHelper {
 
 		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
 			// if the field is a PRIMARY KEY
-			return createPrimaryKeyColumn(FIELD.getAnnotation(SQLIdentifier.class),sqlType, org.com.ramboindustries.corp.sql.types.SQLDataDefinitionImpl.getDataDefinition(SYSTEM));
+			return createPrimaryKeyColumn(FIELD.getAnnotation(SQLIdentifier.class),sqlType, SQLDataDefinitionImpl.getDataDefinition(SYSTEM));
 		} else if (FIELD.isAnnotationPresent(SQLColumn.class)) {
 			final SQLColumn COLUMN = FIELD.getAnnotation(SQLColumn.class);
+			if(isEnum(FIELD)) {
+				// if the field is a ENUM type
+				return createColumn(COLUMN, sqlType, false);
+			}
 			TypeClass TYPE = TypeClass.getTypeByName(FIELD_NAME);
 			switch (TYPE) {
 			case BIG_DECIMAL:
@@ -180,6 +184,9 @@ public class SQLClassHelper {
 			sqlType = SQLMySqlType.getSqlType(getPrimaryKey(FIELD.getType()).getType());
 			return createForeignKeyColumn(COLUMN, sqlType);
 		} else {
+			if(isEnum(FIELD)) {
+				return createColumn(FIELD, sqlType, false);
+			}
 			TypeClass TYPE = TypeClass.getTypeByName(FIELD_NAME);
 			switch (TYPE) {
 			case BIG_DECIMAL:
@@ -216,6 +223,10 @@ public class SQLClassHelper {
 		default:
 			return null;
 		}
+	}
+	
+	private static boolean isEnum(final Field FIELD) {
+		return FIELD.getType().isEnum();
 	}
 	
 	

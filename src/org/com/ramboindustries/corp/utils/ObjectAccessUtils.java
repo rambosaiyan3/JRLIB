@@ -26,48 +26,7 @@ import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
  */
 public class ObjectAccessUtils {
 
-	/**
-	 * Gets the fields from the instance, if the class contains the 
-	 * @SqlColumn at a field, it will get the name from the annotation
-	 * @param object instance of the class
-	 * @return a map that contains the field name and its value
-	 * @author kernelpanic_r
-	 * @throws IllegalAccessException
-	 * @throws SecurityException
-	 * @throws SQLIdentifierException 
-	 */
-	public static <E> Map<String, Object> getFieldsValuesFromSQLEntity(E object)
-			throws IllegalAccessException, SecurityException, SQLIdentifierException {
-		Map<String, Object> keyValue = new HashMap<>();
-		Field[] objectFields = object.getClass().getDeclaredFields();
-		byte identifier = 0;
-
-		for (Field field : objectFields) {
-			field.setAccessible(true);
-			if (!field.isAnnotationPresent(SQLIgnore.class)) {
-				if (field.isAnnotationPresent(SQLIdentifier.class)) {
-					keyValue.put(field.getDeclaredAnnotation(SQLIdentifier.class).identifierName(), field.get(object));
-					++identifier;
-				} else if (field.isAnnotationPresent(SQLColumn.class)) {
-					keyValue.put(field.getDeclaredAnnotation(SQLColumn.class).name(), field.get(object));
-				} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
-					keyValue.put(field.getAnnotation(SQLForeignKey.class).name(), SQLClassHelper.getPrimaryKey(field.get(object).getClass()));
-				} else {
-				}
-				keyValue.put(field.getName(), field.get(object));
-
-				field.setAccessible(false);
-				if (identifier > 1) {
-					throw new SQLIdentifierException();
-				}
-			}
-		}
-		if (identifier == 0) {
-			throw new SQLIdentifierException(
-					"The " + object.getClass().getSimpleName() + " does not have a identifier!");
-		}
-		return keyValue;
-	}
+	
 	/**
 	 * @author kernelpanic_r
 	 * @param clazz class that you want the super classes
@@ -192,17 +151,7 @@ public class ObjectAccessUtils {
 		return clazz.newInstance();
 	}
 	
-		public static String getName(Field field) {
-		if (field.isAnnotationPresent(SQLIdentifier.class)) {
-			return field.getAnnotation(SQLIdentifier.class).identifierName();
-		} else if (field.isAnnotationPresent(SQLColumn.class)) {
-			return field.getAnnotation(SQLColumn.class).name();
-		} else if (field.isAnnotationPresent(SQLForeignKey.class)) {
-			return field.getAnnotation(SQLForeignKey.class).name();
-		} else {
-			return field.getName();
-		}
-	}
+	
 	
 		
 	

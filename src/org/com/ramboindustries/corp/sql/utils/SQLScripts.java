@@ -1,12 +1,18 @@
 package org.com.ramboindustries.corp.sql.utils;
 
+import static org.com.ramboindustries.corp.sql.utils.SQLUtils.getTableName;
+import static org.com.ramboindustries.corp.utils.ObjectAccessUtils.getAllFieldFromClassAndSuperClass;
+
 import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
+import org.com.ramboindustries.corp.sql.SQLJavaField;
+import org.com.ramboindustries.corp.sql.SQLJavaStatement;
 import org.com.ramboindustries.corp.sql.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
@@ -14,9 +20,6 @@ import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-
-import static org.com.ramboindustries.corp.utils.ObjectAccessUtils.getAllFieldFromClassAndSuperClass;
-import static org.com.ramboindustries.corp.sql.utils.SQLUtils.getTableName;
 
 /**
  * Class that contain the SQLs scripts
@@ -34,26 +37,37 @@ public class SQLScripts {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	public <E> String createSQLInsertScript(final E OBJECT) throws Exception {
-		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
-		
-		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when insert
+	public <E> SQLJavaStatement createSQLInsertScript(final E OBJECT) throws Exception {
+		Set<SQLJavaField> javaFields = getAllFieldFromClassAndSuperClass(OBJECT, false);
+		SQLJavaStatement javaStatement = new SQLJavaStatement();
+
+		// we have to remove the primary key, to avoid the
+		// MySQLIntegrityConstraintViolationException when insert
 		// we do not need the primary key of the table when inserting or updating
-		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
-		
+		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		SQLUtils.removePrimaryKeyFromList(javaFields, PK_NAME);
+
 		StringBuilder columns = new StringBuilder(" ( ");
 		StringBuilder values = new StringBuilder(" ( ");
-		map.forEach((column, value) -> {
-			columns.append(column + ", ");
-			values.append(value + ", ");
+		List<Object> javaValues = new ArrayList<>();
+		javaFields.forEach((item) -> {
+			columns.append(item.getSqlColumn() + ", ");
+			values.append("?, ");
+			javaValues.add(item.getValue());
 		});
 		columns.delete(columns.lastIndexOf(","), columns.length());
 		columns.append(")");
 		values.delete(values.lastIndexOf(","), values.length());
 		values.append(")");
-		return SQLDataManipulationCons.INSERT + getTableName(OBJECT.getClass()) + columns.toString() + SQLDataManipulationCons.VALUES + values.toString() + ";";
+
+		// set the Script for SQLPreparedStatement
+		javaStatement.setSql(SQLDataManipulationCons.INSERT + getTableName(OBJECT.getClass()) + columns.toString()
+				+ SQLDataManipulationCons.VALUES + values.toString() + ";");
+		// set the values
+		javaStatement.setValues(javaValues);
+		return javaStatement;
 	}
-	
+
 	/**
 	 * Creates a dinamic update script with a where condition
 	 * @param OBJECT
