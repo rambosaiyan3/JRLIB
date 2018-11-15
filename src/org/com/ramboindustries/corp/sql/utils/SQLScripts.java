@@ -8,7 +8,6 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLJavaField;
@@ -111,20 +110,29 @@ public class SQLScripts {
 		return javaStatement;
 	}
 	
-	public <E> String createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
-		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
+	public <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
+
+		Set<SQLJavaField> javaField = getAllFieldFromClassAndSuperClass(OBJECT, false);	
 		StringBuilder sql = new StringBuilder(SQLDataManipulationCons.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulationCons.SET);
-		
-		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
-		// we do not need the primary key of the table when inserting or updating
-		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
-				
-		map.forEach((column, value) -> {
-			sql.append(column + " = " + value + ", ");
+		SQLJavaStatement javaStatement = new SQLJavaStatement();
+		List<Object> values = new ArrayList<>();
+
+		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		SQLUtils.removePrimaryKeyFromList(javaField, PK_NAME);
+
+		javaField.forEach(item -> {
+			sql.append(item.getSqlColumn() + " = ?, ");
+			values.add(item.getValue());
 		});
+		
 		sql.delete(sql.lastIndexOf(","), sql.length());
 		sql.append(SQLUtils.createWhereCondition(WHERE));
-		return sql.toString();
+		
+		javaStatement.setSql(sql.toString());
+		javaStatement.setValues(values);
+		
+		return javaStatement;
+		
 	}
 	
 	/**

@@ -15,6 +15,7 @@ public class SQLWhereCondition {
 		this.fieldName = fieldName;
 		this.fieldValue = fieldValue;
 		this.conditionType = conditionType;
+		this.operator = operator == null ? SQLOperator.AND : operator;
 	}
 	
 	public SQLWhereCondition(String fieldName, Object fieldValue, SQLConditionType conditionType,

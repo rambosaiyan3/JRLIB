@@ -66,4 +66,8 @@ public class BaseDAO  {
 		jdbc.commit();
 	}
 	
+	public <E extends BaseEntity>  E find(Class<E> clazz, SQLWhereCondition where) throws SQLException {
+		return jdbc.findOne(clazz, where, SHOW_SQL);
+	}
+	
 }

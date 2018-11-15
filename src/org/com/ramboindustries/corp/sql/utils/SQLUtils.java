@@ -324,7 +324,7 @@ public final class SQLUtils {
 	}	
 	
 	public static void createPreparedStatementWhereCondition(List<SQLWhereCondition> wheres, PreparedStatement statement, int position) throws SQLException {
-		for(int i = 0; i < wheres.size(); i ++) {
+		for(int i = 0; i < wheres.size(); i++) {
 			createPreparedStatementWhereCondition(wheres.get(i), statement, position++);
 		}
 	}

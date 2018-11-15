@@ -24,10 +24,7 @@ import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
-import org.com.ramboindustries.corp.text.JRString;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
-
-
 
 /**
  * 
@@ -134,7 +131,7 @@ public final class JDBCConnection implements SQLJdbc {
 				// if no result was found
 				return null;
 			}
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
@@ -153,16 +150,20 @@ public final class JDBCConnection implements SQLJdbc {
 		
 		try {	
 
+			PreparedStatement statement = connection.prepareStatement(SCRIPT);
+			SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
+			
+			
 			// Gets all the fields from class
 			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
-			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			final ResultSet RESULT_SET = executeSQLSelect(statement);
 			if(!RESULT_SET.next()) {
 				// no result found
 				return null;
 			}
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
@@ -227,7 +228,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 		while (RESULT_SET.next()) {
 			try {
-				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
 			}catch(SQLScriptException e) {
 				SQL_LOGGER.showException(e.getScript());
 				throw e;
@@ -294,7 +295,7 @@ public final class JDBCConnection implements SQLJdbc {
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		List<Object[]> objects = new ArrayList<>();
-		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+		final ResultSet RESULT_SET = executeSQLSelect(SCRIPT);
 
 		while (RESULT_SET.next()) {
 			final byte LENGTH = (byte) COLUMNS.length;
@@ -321,6 +322,8 @@ public final class JDBCConnection implements SQLJdbc {
 		
 		// return a String that contains the SQL and a List that contains the values
 		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		
+		// get the Script that was generated
 		final String SCRIPT =  javaStatement.getSql();
 		
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
@@ -371,10 +374,10 @@ public final class JDBCConnection implements SQLJdbc {
 			}
 			if (dropTable != null) {
 				// if the table exists, it will be dropped
-				this.executeSQL(dropTable);
+				executeSQL(dropTable);
 			}
 			// execute the script to create the table
-			this.executeSQL(CREATE_TABLE);
+			executeSQL(CREATE_TABLE);
 		} else {
 			// if the class does not have the @SQLTable annotation
 			throw new SQLTableException(CLAZZ);
@@ -415,11 +418,10 @@ public final class JDBCConnection implements SQLJdbc {
 		
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 		
-		// it count how many ? we have on the SQL script
-		int numberStatements = JRString.countCharacterOccurrences('?', SCRIPT, 0, 0);
-		
-		// set to the UPDATE
 		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
+		
+		// like we just have one where statement, we get the number of parameters
+		int numberStatements = statement.getParameterMetaData().getParameterCount() - 1;
 		
 		// set to the WHERE Statement
 		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, numberStatements); 
@@ -446,13 +448,28 @@ public final class JDBCConnection implements SQLJdbc {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <E> E mergeObject(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)throws Exception {
-		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+
+		SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		final String SCRIPT = javaStatement.getSql();
 		if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 		// makes a downcast to generic class
 		Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
+
+		// the number of where conditions
+		int  whereNumber = WHERE.size() - 1;
+		
+		// we get the number where the where statement characters starts
+		int numberOccurrences = statement.getParameterMetaData().getParameterCount() - whereNumber;
+		
+		// make the statement of the list of WHERE conditions
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, numberOccurrences);
+		
 		// we make the update
-		this.executeSQL(SCRIPT);
+		executeSQL(statement);
 
 		// get the primary key value of the object
 		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);
