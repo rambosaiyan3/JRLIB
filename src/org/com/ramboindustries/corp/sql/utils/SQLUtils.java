@@ -1,6 +1,7 @@
 package org.com.ramboindustries.corp.sql.utils;
 
 import java.lang.reflect.Field;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -9,6 +10,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLJavaField;
@@ -17,9 +19,10 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
-import org.com.ramboindustries.corp.sql.commands.SQLDataDefinition;
-import org.com.ramboindustries.corp.sql.commands.SQLDataManipulation;
+import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
+import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.text.TypeClass;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
@@ -61,17 +64,17 @@ public final class SQLUtils {
 	}
 
 	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
-		return SQLDataManipulation.WHERE + WHERE_CONDITION.getFieldName() + " " + 
-				WHERE_CONDITION.getConditionType().getType() + " " + convertToString(WHERE_CONDITION.getFieldValue());
+		return SQLDataManipulationCons.WHERE + WHERE_CONDITION.getFieldName() + " " + 
+				WHERE_CONDITION.getConditionType().getType() + " ?";
 			
 	}
 
 	protected static String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
-		StringBuilder builder = new StringBuilder(" " + SQLDataManipulation.WHERE_TRUE);
+		StringBuilder builder = new StringBuilder(" " + SQLDataManipulationCons.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( WHERE.getOperator().getOperator() + 
 					WHERE.getFieldName() + " " +
-					WHERE.getConditionType().getType() + " " + convertToString(WHERE.getFieldValue()));
+					WHERE.getConditionType().getType() + " ? " );
 		});
 		return builder.toString();
 	}
@@ -111,7 +114,7 @@ public final class SQLUtils {
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		else
 			name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		return SQLDataDefinition.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinition.PRIMARY_KEY + "(" + name + ")";
+		return SQLDataDefinitionCons.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinitionCons.PRIMARY_KEY + "(" + name + ")";
 	}
 
 	/**
@@ -132,8 +135,8 @@ public final class SQLUtils {
 			fieldReferenced = SQLClassHelper.getPrimaryKey(field.getType()).getAnnotation(SQLIdentifier.class)
 					.identifierName();
 		}
-		return SQLDataDefinition.CONSTRAINT + CONSTRAINT + SQLDataDefinition.FOREIGN_KEY + "("
-				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinition.REFERENCES
+		return SQLDataDefinitionCons.CONSTRAINT + CONSTRAINT + SQLDataDefinitionCons.FOREIGN_KEY + "("
+				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinitionCons.REFERENCES
 				+ getTableName(field.getType()) + "(" + fieldReferenced + ")";
 	}
 
@@ -217,10 +220,10 @@ public final class SQLUtils {
 	 * @throws SQLException
 	 */
 	public static Object getSQLValue(String name, ResultSet resultSet, Class<?> clazz) throws SQLException {
-		org.com.ramboindustries.corp.text.Type type = org.com.ramboindustries.corp.text.Type.getTypeByName(clazz.getSimpleName());
+		TypeClass type = TypeClass.getTypeByName(clazz.getSimpleName());
 		if (type == null) {
 			Field field = SQLClassHelper.getPrimaryKey(clazz);
-			type = org.com.ramboindustries.corp.text.Type.getTypeByName(field.getType().getSimpleName());
+			type = TypeClass.getTypeByName(field.getType().getSimpleName());
 			clazz = field.getType();
 		}
 
@@ -310,4 +313,91 @@ public final class SQLUtils {
 		else return "PK_" + getTableName(CLAZZ);
 	}
 	
+	public static void createPreparedStatementObject(List<Object> values, PreparedStatement statement) throws SQLException {
+		for(int i = 0; i < values.size(); i++) {
+			setPreparedStatementType(values.get(i), statement, i + 1);
+		}
+	}
+
+	public static void createPreparedStatementWhereCondition(SQLWhereCondition where, PreparedStatement statement, int position) throws SQLException {
+		setPreparedStatementType(where.getFieldValue(), statement, position);
+	}	
+	
+	public static void createPreparedStatementWhereCondition(List<SQLWhereCondition> wheres, PreparedStatement statement, int position) throws SQLException {
+		for(int i = 0; i < wheres.size(); i++) {
+			createPreparedStatementWhereCondition(wheres.get(i), statement, position++);
+		}
+	}
+
+	private static void setPreparedStatementType(Object value, PreparedStatement statement, int position) throws SQLException {
+		
+			if(Objects.isNull(value)) {
+				statement.setNull(position, 0);
+				return;
+			}
+			TypeClass type = TypeClass.getTypeByName(value.getClass().getSimpleName());
+			if (type == null) {
+				Field field = SQLClassHelper.getPrimaryKey(value.getClass());
+				type = TypeClass.getTypeByName(field.getType().getSimpleName());
+			}
+			switch(type) {
+			case BYTE:
+				statement.setByte(position, (Byte) value);
+				break;
+			case SHORT:
+				statement.setShort(position, (Short) value );
+				break;
+			case INTEGER:
+				statement.setInt(position, (Integer) value );
+				break;
+			case LONG:
+				statement.setLong(position, (Long) value );
+				break;
+			case FLOAT:
+				statement.setFloat(position, (Float) value );
+				break;
+			case DOUBLE:
+				statement.setDouble(position, (Double) value );
+				break;
+			case BIG_DECIMAL:
+				statement.setBigDecimal(position, (java.math.BigDecimal) value );
+				break;
+			case BOOLEAN:
+				statement.setBoolean(position, (Boolean) value );
+				break;
+			case STRING:
+				statement.setString(position, (String) value );
+				break;
+			case DATE:
+				statement.setDate(position, (java.sql.Date) value);
+				break;
+			case LOCAL_DATE:
+				java.sql.Date date = java.sql.Date.valueOf((java.time.LocalDate) value);
+				statement.setDate(position, date);
+				break;
+			case LOCAL_TIME:
+				statement.setDate(position, null);
+				break;
+			case LOCAL_DATE_TIME:
+				java.sql.Date date1 = java.sql.Date.valueOf(((java.time.LocalDateTime) value).toLocalDate());
+				statement.setDate(position, date1);
+				break;
+			case CHARACTER:
+				String val = value !=  null ? value .toString() : null;
+				statement.setString(position,  val);
+				break;
+			}
+	}
+	
+	/**
+	 * We do not need the identifier when update or insert data, so we remove it from list
+	 * @param sqljavaField
+	 * @param name
+	 */
+	protected static void removePrimaryKeyFromList(Set<SQLJavaField> sqljavaField, String name) {
+			sqljavaField.removeIf(item -> item.getSqlColumn().equals(name));
+	}
+
+	
+
 }

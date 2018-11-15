@@ -23,5 +23,21 @@ public class JRString {
 		return text.lastIndexOf(character);
 	}
 	
+	/**
+	 * Count how occurrences the text has with the character
+	 * @param character
+	 * @param text
+	 * @param index
+	 * @param times
+	 * @return
+	 */
+	public static int countCharacterOccurrences(char character, String text, int index, int times) {
+		if(index >= text.length()) {
+			return times;
+		}
+		times += character == text.charAt(index) ? 1 : 0;
+		return countCharacterOccurrences(character, text, index + 1, times);
+	}
+	
 	
 }

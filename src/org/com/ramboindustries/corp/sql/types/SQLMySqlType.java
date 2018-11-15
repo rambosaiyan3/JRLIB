@@ -16,7 +16,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 4;
 		}
 	},
 	SHORT(Short.class) {
@@ -27,7 +27,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 6;
 		}
 	},
 	INT(Integer.class) {
@@ -38,7 +38,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 11;
 		}
 	},
 	LONG(Long.class) {
@@ -49,7 +49,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 20;
 		}
 	},
 	FLOAT(Float.class) {
@@ -60,7 +60,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 9;
 		}
 	},
 	DECIMAL(BigDecimal.class) {
@@ -71,7 +71,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 10;
 		}
 	},
 	DOUBLE(Double.class) {
@@ -82,7 +82,7 @@ public enum SQLMySqlType implements SQLType {
 
 		@Override
 		public Integer defaultSize() {
-			return null;
+			return 19;
 		}
 	},
 	STRING(String.class) {

@@ -1,6 +1,6 @@
 package org.com.ramboindustries.corp.text;
 
-public enum Type {
+public enum TypeClass {
 
 	BYTE(Byte.class.getSimpleName()),
 	SHORT(Short.class.getSimpleName()),
@@ -17,7 +17,7 @@ public enum Type {
 	LOCAL_DATE_TIME(java.time.LocalDateTime.class.getSimpleName()),
 	CHARACTER(Character.class.getSimpleName());
 	
-	private Type(String type) {
+	private TypeClass(String type) {
 		this.type = type;
 	}
 
@@ -28,8 +28,8 @@ public enum Type {
 		return type;
 	}
 	
-	public static Type getTypeByName(String name) {
-		for(Type type : Type.values()) {
+	public static TypeClass getTypeByName(String name) {
+		for(TypeClass type : TypeClass.values()) {
 			if(type.getType().equalsIgnoreCase(name))return type;
 		}
 		return null;

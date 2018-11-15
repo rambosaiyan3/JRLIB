@@ -1,6 +1,6 @@
 package org.com.ramboindustries.corp.sql.commands;
 
-public final class SQLDataDefinition {
+public final class SQLDataDefinitionCons {
 
 	public static String CREATE_DATABASE = "CREATE DATABASE ";
 	public static String CREATE_DATABASE_IF_NOT_EXISTS = "CREATE DATABASE IF NOT EXISTS "; 
@@ -16,10 +16,9 @@ public final class SQLDataDefinition {
 	public static String PRIMARY_KEY = " PRIMARY KEY ";
 	public static String CONSTRAINT = "CONSTRAINT ";
 	public static String FOREIGN_KEY = " FOREIGN KEY ";
-	public static String AUTO_INCREMENT = " AUTO_INCREMENT";
 	public static String REFERENCES = " REFERENCES ";
 	
-	private SQLDataDefinition() {
+	private SQLDataDefinitionCons() {
 		
 	}
 	

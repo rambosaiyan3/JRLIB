@@ -5,6 +5,7 @@ import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
 import java.sql.DriverManager;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.ArrayList;
@@ -24,8 +25,6 @@ import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
-
-
 
 /**
  * 
@@ -86,15 +85,25 @@ public final class JDBCConnection implements SQLJdbc {
 	public ResultSet executeSQLSelect(final String SQL) throws SQLException {
 		if (connection == null)
 			this.openConnection();
-		return connection.prepareStatement(SQL).executeQuery();
+		return connection.createStatement().executeQuery(SQL);
 	}
 
+	public ResultSet executeSQLSelect(final PreparedStatement statement) throws SQLException {
+		return statement.executeQuery();
+	}
+	
 	@Override
 	public void executeSQL(final String SQL) throws SQLException {
 		if (connection == null)
 			this.openConnection();
 		connection.prepareStatement(SQL).executeUpdate();
 	}
+	
+	public void executeSQL(final PreparedStatement statement) throws SQLException {
+		statement.executeUpdate();
+		statement.close();
+	}
+	
 
 	@Override
 	public <E> E findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
@@ -102,7 +111,13 @@ public final class JDBCConnection implements SQLJdbc {
 					
 			// Creates the SQL Script 
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
-		
+			
+			PreparedStatement statement = connection.prepareStatement(SCRIPT);
+			
+			// set the values to prepared statement, we set the one, because it has just one where condition
+			// so, we use a single ?
+			SQLUtils.createPreparedStatementWhereCondition(SQL_WHERE_CONDITION, statement, 1);
+			
 			if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 			
 			try {	
@@ -111,12 +126,12 @@ public final class JDBCConnection implements SQLJdbc {
 			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
-			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			final ResultSet RESULT_SET = executeSQLSelect(statement);
 			if(!RESULT_SET.next()) {
 				// if no result was found
 				return null;
 			}
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
@@ -135,16 +150,20 @@ public final class JDBCConnection implements SQLJdbc {
 		
 		try {	
 
+			PreparedStatement statement = connection.prepareStatement(SCRIPT);
+			SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
+			
+			
 			// Gets all the fields from class
 			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
-			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			final ResultSet RESULT_SET = executeSQLSelect(statement);
 			if(!RESULT_SET.next()) {
 				// no result found
 				return null;
 			}
-			E result = this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
 			return result;
 		} catch (SQLException e) {
 			SQL_LOGGER.showException(SCRIPT);
@@ -209,7 +228,7 @@ public final class JDBCConnection implements SQLJdbc {
 
 		while (RESULT_SET.next()) {
 			try {
-				objects.add(this.createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
 			}catch(SQLScriptException e) {
 				SQL_LOGGER.showException(e.getScript());
 				throw e;
@@ -276,7 +295,7 @@ public final class JDBCConnection implements SQLJdbc {
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 
 		List<Object[]> objects = new ArrayList<>();
-		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+		final ResultSet RESULT_SET = executeSQLSelect(SCRIPT);
 
 		while (RESULT_SET.next()) {
 			final byte LENGTH = (byte) COLUMNS.length;
@@ -300,10 +319,22 @@ public final class JDBCConnection implements SQLJdbc {
 	public <E> E persistObject(final E OBJECT, final boolean SHOW_SQL) throws Exception {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
-		final String SCRIPT = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		
+		// return a String that contains the SQL and a List that contains the values
+		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		
+		// get the Script that was generated
+		final String SCRIPT =  javaStatement.getSql();
+		
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		
+		// changes the ? to the real values
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
 		
 		if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
-		this.executeSQL(SCRIPT);
+		
+		executeSQL(statement);
+		
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
 		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
@@ -343,10 +374,10 @@ public final class JDBCConnection implements SQLJdbc {
 			}
 			if (dropTable != null) {
 				// if the table exists, it will be dropped
-				this.executeSQL(dropTable);
+				executeSQL(dropTable);
 			}
 			// execute the script to create the table
-			this.executeSQL(CREATE_TABLE);
+			executeSQL(CREATE_TABLE);
 		} else {
 			// if the class does not have the @SQLTable annotation
 			throw new SQLTableException(CLAZZ);
@@ -380,14 +411,26 @@ public final class JDBCConnection implements SQLJdbc {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <E> E mergeObject(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
-		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		
+		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		final String SCRIPT = javaStatement.getSql();
 		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
+		
+		// like we just have one where statement, we get the number of parameters
+		int numberStatements = statement.getParameterMetaData().getParameterCount() - 1;
+		
+		// set to the WHERE Statement
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, numberStatements); 
 		
 		// makes a downcast to generic class
 		Class<E> CLAZZ = (Class<E>)OBJECT.getClass();
 		
 		// we make the update
-		this.executeSQL(SCRIPT);
+		executeSQL(statement);
 		
 		// get the primary key value of the object
 		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);
@@ -405,13 +448,28 @@ public final class JDBCConnection implements SQLJdbc {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <E> E mergeObject(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)throws Exception {
-		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+
+		SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		final String SCRIPT = javaStatement.getSql();
 		if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 		// makes a downcast to generic class
 		Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
+
+		// the number of where conditions
+		int  whereNumber = WHERE.size() - 1;
+		
+		// we get the number where the where statement characters starts
+		int numberOccurrences = statement.getParameterMetaData().getParameterCount() - whereNumber;
+		
+		// make the statement of the list of WHERE conditions
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, numberOccurrences);
+		
 		// we make the update
-		this.executeSQL(SCRIPT);
+		executeSQL(statement);
 
 		// get the primary key value of the object
 		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);
