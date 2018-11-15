@@ -65,7 +65,7 @@ public final class SQLUtils {
 
 	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
 		return SQLDataManipulationCons.WHERE + WHERE_CONDITION.getFieldName() + " " + 
-				WHERE_CONDITION.getConditionType().getType() + " " + convertToString(WHERE_CONDITION.getFieldValue());
+				WHERE_CONDITION.getConditionType().getType() + " ?";
 			
 	}
 
@@ -74,7 +74,7 @@ public final class SQLUtils {
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( WHERE.getOperator().getOperator() + 
 					WHERE.getFieldName() + " " +
-					WHERE.getConditionType().getType() + " " + convertToString(WHERE.getFieldValue()));
+					WHERE.getConditionType().getType() + " ? " );
 		});
 		return builder.toString();
 	}
@@ -314,12 +314,26 @@ public final class SQLUtils {
 	}
 	
 	public static void createPreparedStatementObject(List<Object> values, PreparedStatement statement) throws SQLException {
+		for(int i = 0; i < values.size(); i++) {
+			setPreparedStatementType(values.get(i), statement, i + 1);
+		}
+	}
+
+	public static void createPreparedStatementWhereCondition(SQLWhereCondition where, PreparedStatement statement, int position) throws SQLException {
+		setPreparedStatementType(where.getFieldValue(), statement, position);
+	}	
+	
+	public static void createPreparedStatementWhereCondition(List<SQLWhereCondition> wheres, PreparedStatement statement, int position) throws SQLException {
+		for(int i = 0; i < wheres.size(); i ++) {
+			createPreparedStatementWhereCondition(wheres.get(i), statement, position++);
+		}
+	}
+
+	private static void setPreparedStatementType(Object value, PreparedStatement statement, int position) throws SQLException {
 		
-		byte position = 1;
-		for (Object value : values) {
 			if(Objects.isNull(value)) {
-				statement.setNull(position++, 0);
-				continue;
+				statement.setNull(position, 0);
+				return;
 			}
 			TypeClass type = TypeClass.getTypeByName(value.getClass().getSimpleName());
 			if (type == null) {
@@ -328,52 +342,51 @@ public final class SQLUtils {
 			}
 			switch(type) {
 			case BYTE:
-				statement.setByte(position++, (Byte) value);
+				statement.setByte(position, (Byte) value);
 				break;
 			case SHORT:
-				statement.setShort(position++, (Short) value );
+				statement.setShort(position, (Short) value );
 				break;
 			case INTEGER:
-				statement.setInt(position++, (Integer) value );
+				statement.setInt(position, (Integer) value );
 				break;
 			case LONG:
-				statement.setLong(position++, (Long) value );
+				statement.setLong(position, (Long) value );
 				break;
 			case FLOAT:
-				statement.setFloat(position++, (Float) value );
+				statement.setFloat(position, (Float) value );
 				break;
 			case DOUBLE:
-				statement.setDouble(position++, (Double) value );
+				statement.setDouble(position, (Double) value );
 				break;
 			case BIG_DECIMAL:
-				statement.setBigDecimal(position++, (java.math.BigDecimal) value );
+				statement.setBigDecimal(position, (java.math.BigDecimal) value );
 				break;
 			case BOOLEAN:
-				statement.setBoolean(position++, (Boolean) value );
+				statement.setBoolean(position, (Boolean) value );
 				break;
 			case STRING:
-				statement.setString(position++, (String) value );
+				statement.setString(position, (String) value );
 				break;
 			case DATE:
-				statement.setDate(position++, (java.sql.Date) value);
+				statement.setDate(position, (java.sql.Date) value);
 				break;
 			case LOCAL_DATE:
 				java.sql.Date date = java.sql.Date.valueOf((java.time.LocalDate) value);
-				statement.setDate(position++, date);
+				statement.setDate(position, date);
 				break;
 			case LOCAL_TIME:
-				statement.setDate(position++, null);
+				statement.setDate(position, null);
 				break;
 			case LOCAL_DATE_TIME:
 				java.sql.Date date1 = java.sql.Date.valueOf(((java.time.LocalDateTime) value).toLocalDate());
-				statement.setDate(position++, date1);
+				statement.setDate(position, date1);
 				break;
 			case CHARACTER:
 				String val = value !=  null ? value .toString() : null;
-				statement.setString(position++,  val);
+				statement.setString(position,  val);
 				break;
 			}
-		}
 	}
 	
 	/**
@@ -385,5 +398,6 @@ public final class SQLUtils {
 			sqljavaField.removeIf(item -> item.getSqlColumn().equals(name));
 	}
 
+	
 
 }

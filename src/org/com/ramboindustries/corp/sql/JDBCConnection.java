@@ -24,6 +24,7 @@ import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
+import org.com.ramboindustries.corp.text.JRString;
 import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 
@@ -90,6 +91,10 @@ public final class JDBCConnection implements SQLJdbc {
 		return connection.createStatement().executeQuery(SQL);
 	}
 
+	public ResultSet executeSQLSelect(final PreparedStatement statement) throws SQLException {
+		return statement.executeQuery();
+	}
+	
 	@Override
 	public void executeSQL(final String SQL) throws SQLException {
 		if (connection == null)
@@ -99,6 +104,7 @@ public final class JDBCConnection implements SQLJdbc {
 	
 	public void executeSQL(final PreparedStatement statement) throws SQLException {
 		statement.executeUpdate();
+		statement.close();
 	}
 	
 
@@ -108,7 +114,13 @@ public final class JDBCConnection implements SQLJdbc {
 					
 			// Creates the SQL Script 
 			final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
-		
+			
+			PreparedStatement statement = connection.prepareStatement(SCRIPT);
+			
+			// set the values to prepared statement, we set the one, because it has just one where condition
+			// so, we use a single ?
+			SQLUtils.createPreparedStatementWhereCondition(SQL_WHERE_CONDITION, statement, 1);
+			
 			if(SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
 			
 			try {	
@@ -117,7 +129,7 @@ public final class JDBCConnection implements SQLJdbc {
 			final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
 			// Creates the resultSet
-			final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
+			final ResultSet RESULT_SET = executeSQLSelect(statement);
 			if(!RESULT_SET.next()) {
 				// if no result was found
 				return null;
@@ -396,14 +408,27 @@ public final class JDBCConnection implements SQLJdbc {
 	@SuppressWarnings("unchecked")
 	@Override
 	public <E> E mergeObject(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
-		final String SCRIPT = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		
+		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		final String SCRIPT = javaStatement.getSql();
 		if(SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		
+		// it count how many ? we have on the SQL script
+		int numberStatements = JRString.countCharacterOccurrences('?', SCRIPT, 0, 0);
+		
+		// set to the UPDATE
+		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
+		
+		// set to the WHERE Statement
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, numberStatements); 
 		
 		// makes a downcast to generic class
 		Class<E> CLAZZ = (Class<E>)OBJECT.getClass();
 		
 		// we make the update
-		this.executeSQL(SCRIPT);
+		executeSQL(statement);
 		
 		// get the primary key value of the object
 		final Object PRIMARY_KEY_VALUE = SQLClassHelper.getPrimaryKeyValue(OBJECT);

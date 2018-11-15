@@ -79,20 +79,36 @@ public class SQLScripts {
 	 * @throws IntrospectionException
 	 * @throws SQLIdentifierException 
 	 */
-	public <E> String createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws IllegalAccessException, IllegalArgumentException, InvocationTargetException, IntrospectionException, SQLIdentifierException {
-		Map<String, String> map = SQLUtils.mapAttributes(getAllFieldFromClassAndSuperClass(OBJECT, false));
+	public <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws Exception {
+		// all the fields
+		Set<SQLJavaField> fields = getAllFieldFromClassAndSuperClass(OBJECT, false);
+		
+		// create a object of Java Statement
+		SQLJavaStatement javaStatement = new SQLJavaStatement();
+		
+		// get the name of the primary key
+		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		
+		// we remove the primary key
+		SQLUtils.removePrimaryKeyFromList(fields, PK_NAME);
+		
+		// create a default SQL update 
 		StringBuilder sql = new StringBuilder(SQLDataManipulationCons.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulationCons.SET);
 		
-		// we have to remove the primary key, to avoid the MySQLIntegrityConstraintViolationException when UPDATE
-		// we do not need the primary key of the table when inserting or updating
-		map.remove(SQLUtils.getPrimaryKeyName(OBJECT.getClass()));
+		// init a list of the values
+		List<Object> values = new ArrayList<>();
 		
-		map.forEach((column, value) -> {
-			sql.append(column + " = " + value + ", ");
+		fields.forEach((item) -> {
+			sql.append(item.getSqlColumn() + " = ?, ");
+			values.add(item.getValue());
 		});
+		
 		sql.delete(sql.lastIndexOf(","), sql.length());
 		sql.append(SQLUtils.createWhereCondition(WHERE));
-		return sql.toString();
+		javaStatement.setSql(sql.toString());
+		javaStatement.setValues(values);
+		
+		return javaStatement;
 	}
 	
 	public <E> String createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
