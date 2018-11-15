@@ -54,7 +54,7 @@ public class BaseDAO  {
 		jdbc.commit();
 	}
 	
-  # Return just a one object
+  # Return just a object
 	public <E extends BaseEntity>  E find(Class<E> clazz, List<SQLWhereCondition> where) throws SQLException {
 		return jdbc.findOne(clazz, where, SHOW_SQL);
 	}
