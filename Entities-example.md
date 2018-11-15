@@ -1,13 +1,12 @@
 Example of use:
 
-/* the BaseEntity is not a TABLE, but all classes can extend it */
-public abstract class BaseEntity {
+# the BaseEntity is not a TABLE, but all classes can extend it
 
+
+public abstract class BaseEntity {
 	@SQLIdentifier(identifierName = "ID")
 	protected Long id;
- 
- // assume getters and setters
- 
+ ## assume getters and setters
  }
 
 // we can set the own name of the primary key, if we do not use it, the ID name of BaseEntity will prevail
