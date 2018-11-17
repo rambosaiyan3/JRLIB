@@ -49,11 +49,11 @@ public class MainTest {
 //		base.delete(User.class, new ArrayList<>(Arrays.asList(new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL), new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL))));
 		base.delete(User.class, 1L);
 		
-		List<User> users = base.findAll(User.class);
-		users.forEach(usr -> {
-			System.out.println(usr.getName());
-			System.out.println(usr.getId());
-		});
+		
+		
+		
+		User use1 = base.find(User.class, new ArrayList<>(Arrays.asList(new SQLWhereCondition("USER_ID", null, SQLConditionType.IS_NOT_NULL)))).get();
+	
 		
 		
 		

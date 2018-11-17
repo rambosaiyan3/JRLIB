@@ -15,7 +15,7 @@ public class SQLWhereCondition {
 		this.fieldName = fieldName;
 		this.fieldValue = fieldValue;
 		this.conditionType = conditionType;
-		this.operator = operator == null ? SQLOperator.AND : operator;
+		this.operator =  SQLOperator.AND;
 	}
 	
 	public SQLWhereCondition(String fieldName, Object fieldValue, SQLConditionType conditionType,
@@ -26,11 +26,7 @@ public class SQLWhereCondition {
 		this.conditionType = conditionType;
 		this.operator = operator == null ? SQLOperator.AND : operator;
 	}
-
-	public SQLWhereCondition() {
-
-	}
-
+	
 	public String getFieldName() {
 		return fieldName;
 	}
