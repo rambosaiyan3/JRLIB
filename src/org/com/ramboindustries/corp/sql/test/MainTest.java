@@ -1,11 +1,8 @@
 package org.com.ramboindustries.corp.sql.test;
 
 import java.math.BigDecimal;
-import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.List;
 
-import org.com.ramboindustries.corp.sql.SQLWhereCondition;
-import org.com.ramboindustries.corp.sql.enums.SQLConditionType;
 import org.com.ramboindustries.corp.sql.test.dao.BaseDAO;
 import org.com.ramboindustries.corp.sql.test.dao.UserDAO;
 import org.com.ramboindustries.corp.sql.test.entity.User;
@@ -40,6 +37,13 @@ public class MainTest {
 		
 		user = base.save(user).get();
 
+	//	base.delete(User.class, 1L);
+		
+		List<User> users = base.findAll(User.class);
+		users.forEach(usr -> {
+			System.out.println(usr.getName());
+			System.out.println(usr.getId());
+		});
 		
 		
 	}

@@ -74,6 +74,12 @@ public class BaseDAO  {
 		jdbc.commit();
 	}
 	
+	public <E extends BaseEntity>   void delete(Class<E> clazz, Object VALUE) throws SQLException {
+		jdbc.deleteObject(clazz, VALUE, SHOW_SQL);
+		jdbc.commit();
+	}
+	
+	
 	public <E extends BaseEntity>  Optional<E> find(Class<E> clazz, SQLWhereCondition where) throws SQLException {
 		return jdbc.findOne(clazz, where, SHOW_SQL);
 	}

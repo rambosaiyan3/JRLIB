@@ -222,10 +222,9 @@ public final class JDBCConnection {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new SQLException(e);
-			}finally {
-				close(null, RESULT_SET);
 			}
 		}
+		close(null, RESULT_SET);
 		return objects;
 	}
 
@@ -264,10 +263,10 @@ public final class JDBCConnection {
 			} catch (Exception e) {
 				SQL_LOGGER.showException(e.getMessage());
 				throw new SQLException(e);
-			}finally {
-				close(statement, RESULT_SET);
 			}
 		}
+		
+		close(statement, RESULT_SET);
 		return objects;
 	}
 
@@ -292,11 +291,10 @@ public final class JDBCConnection {
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new SQLException(e);
-			}finally {
-				close(statement, RESULT_SET);
 			}
 		}
 
+		close(statement, RESULT_SET);
 		return objects;
 	}
 
@@ -430,19 +428,34 @@ public final class JDBCConnection {
 	 
 	public <E> void deleteObject(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL)
 			throws SQLException {
+		
 		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-		this.executeSQL(SCRIPT);
+		
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
+		
+		if (SHOW_SQL) 	SQL_LOGGER.showScript(SCRIPT);
+		executeSQL(statement);
+	}
+	
+	
+	public <E> void deleteObject(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws SQLException {
+		
+		// we get the primary key name
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
+		SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
+		this.<E>deleteObject(CLAZZ, WHERE, SHOW_SQL);
+		
 	}
 
 	 
 	public <E> void deleteObject(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-		this.executeSQL(SCRIPT);
+		PreparedStatement statement = connection.prepareStatement(SCRIPT);
+		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
+		if (SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		executeSQL(statement);
 	}
 
 	/**
