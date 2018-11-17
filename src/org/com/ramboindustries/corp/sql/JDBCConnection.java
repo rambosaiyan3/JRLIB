@@ -203,7 +203,7 @@ public final class JDBCConnection {
 	 * @throws SQLException
 	 */
 	 
-	public <E> List<E> selectFrom(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
+	public <E> List<E> select(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ);
 		if (SHOW_SQL)
 			SQL_LOGGER.showScript(SCRIPT);
@@ -238,7 +238,7 @@ public final class JDBCConnection {
 	 * @throws Exception
 	 */
 	 
-	public <E> List<E> selectFrom(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
+	public <E> List<E> select(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
 		
@@ -271,7 +271,7 @@ public final class JDBCConnection {
 	}
 
 	 
-	public <E> List<E> selectFrom(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS,
+	public <E> List<E> select(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS,
 			final boolean SHOW_SQL) throws SQLException {
 
 		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
@@ -298,57 +298,12 @@ public final class JDBCConnection {
 		return objects;
 	}
 
-	 
-	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, boolean SHOW_SQL)
-			throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-
-		List<Object[]> objects = new ArrayList<>();
-		final ResultSet RESULT_SET = this.executeSQLSelect(SCRIPT);
-
-		while (RESULT_SET.next()) {
-			final byte LENGTH = (byte) COLUMNS.length;
-			final Object[] OBJECT = new Object[LENGTH];
-			for (byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQLUtils.getSQLValue(SQLUtils.getColumnNameFromField(COLUMNS[i]), RESULT_SET,
-						COLUMNS[i].getType());
-			}
-			objects.add(OBJECT);
-		}
-		return objects;
-	}
-
-	 
-	public List<Object[]> selectFrom(final Class<?> CLAZZ, final Field[] COLUMNS, SQLWhereCondition WHERE_CONDITION,
-			final boolean SHOW_SQL) throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, COLUMNS, WHERE_CONDITION);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-
-		List<Object[]> objects = new ArrayList<>();
-		final ResultSet RESULT_SET = executeSQLSelect(SCRIPT);
-
-		while (RESULT_SET.next()) {
-			final byte LENGTH = (byte) COLUMNS.length;
-			final Object[] OBJECT = new Object[LENGTH];
-			for (byte i = 0; i < LENGTH; i++) {
-				OBJECT[i] = SQLUtils.getSQLValue(SQLUtils.getColumnNameFromField(COLUMNS[i]), RESULT_SET,
-						COLUMNS[i].getType());
-			}
-			objects.add(OBJECT);
-		}
-
-		return objects;
-	}
-
 	/**
 	 * Persist the java object to the database, and then return the object with all
 	 * his relationships
 	 */
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> persistObject(final E OBJECT, final boolean SHOW_SQL) throws Exception {
+	public <E> Optional<E> insert(final E OBJECT, final boolean SHOW_SQL) throws Exception {
 
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 
@@ -426,7 +381,7 @@ public final class JDBCConnection {
 	 * @throws SQLException
 	 */
 	 
-	public <E> void deleteObject(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL)
+	public <E> void delete(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL)
 			throws SQLException {
 		
 		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
@@ -439,17 +394,17 @@ public final class JDBCConnection {
 	}
 	
 	
-	public <E> void deleteObject(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws SQLException {
+	public <E> void delete(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws SQLException {
 		
 		// we get the primary key name
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 		SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
-		this.<E>deleteObject(CLAZZ, WHERE, SHOW_SQL);
+		this.<E>delete(CLAZZ, WHERE, SHOW_SQL);
 		
 	}
 
 	 
-	public <E> void deleteObject(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
+	public <E> void delete(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
 			throws SQLException {
 		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
@@ -462,7 +417,7 @@ public final class JDBCConnection {
 	 * Merge object to database, usually at update statements
 	 */
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> mergeObject(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
+	public <E> Optional<E> update(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
 
 		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
 		final String SCRIPT = javaStatement.getSql();
@@ -507,17 +462,17 @@ public final class JDBCConnection {
 	 * @return
 	 * @throws Exception
 	 */
-	public <E> Optional<E> mergeObject(final E OBJECT, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws Exception{
+	public <E> Optional<E> update(final E OBJECT, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws Exception{
 		
 		// get the name of the primary kery
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
 		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
-		return this.<E>mergeObject(OBJECT, WHERE, SHOW_SQL);
+		return this.<E>update(OBJECT, WHERE, SHOW_SQL);
 	}
 	
 
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> mergeObject(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
+	public <E> Optional<E> update(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
 			throws Exception {
 
 		SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);

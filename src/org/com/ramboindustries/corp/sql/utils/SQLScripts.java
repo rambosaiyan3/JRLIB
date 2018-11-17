@@ -208,36 +208,13 @@ public class SQLScripts {
 		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + ";";
 	}
 
-	/**
-	 * Creates a SELECT A,B,C FROM TABLE
-	 * @param CLAZZ 
-	 * @param COLUMNS
-	 * @return
-	 */
-	public <E> String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS) {
-		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulationCons.SELECT + FIELDS + SQLDataManipulationCons.FROM + getTableName(CLAZZ) + ";";
-	}
-
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
 		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
-	}
-
-	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS, final SQLWhereCondition WHERE) {
-		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
-		return SQLDataManipulationCons.SELECT + FIELDS + SQLDataManipulationCons.FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE) + ";";
 	}
 
 	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		final String CONDITIONS = SQLUtils.createWhereCondition(WHERE);
 		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + CONDITIONS + ";";
-	}
-
-	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final Field[] COLUMNS,
-			final List<SQLWhereCondition> WHERE) {
-		final String FIELDS = SQLUtils.createFieldsToSelect(COLUMNS);
-		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulationCons.SELECT + FIELDS + getTableName(CLAZZ) + WHERE_CONDITIONS + ";";
 	}
 	
 	public <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {

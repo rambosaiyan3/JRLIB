@@ -148,7 +148,7 @@ public class SQLClassHelper {
 					+ isColumnRequired(COLUMN);
 	}
 	private static String createColumnPrecision(final Field FIELD, final SQLType SQL_TYPE) {
-		return FIELD.getName() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ",2)";
+		return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ",2)";
 	}
 	
 	

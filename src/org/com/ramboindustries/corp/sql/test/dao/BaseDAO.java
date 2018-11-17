@@ -22,7 +22,7 @@ public class BaseDAO  {
 	}
 
 	public <E extends BaseEntity>  List<E> findAll(Class<E> clazz) throws SQLException {
-		return jdbc.selectFrom(clazz, SHOW_SQL);
+		return jdbc.select(clazz, SHOW_SQL);
 	}
 
 	public <E extends BaseEntity>  void createTable(Class<E> clazz) throws Exception {
@@ -37,7 +37,7 @@ public class BaseDAO  {
 
 	public  <E extends BaseEntity>  Optional<E> save(E object)  {
 		try {
-			Optional<E> obj = jdbc.persistObject(object, SHOW_SQL);
+			Optional<E> obj = jdbc.insert(object, SHOW_SQL);
 			jdbc.commit();
 			return obj;
 		} catch (Exception e) {
@@ -48,19 +48,19 @@ public class BaseDAO  {
 	}
 	
 	public  <E extends BaseEntity>  Optional<E> update(E object, SQLWhereCondition where) throws Exception {
-		Optional<E> obj = jdbc.mergeObject(object, where, SHOW_SQL);
+		Optional<E> obj = jdbc.update(object, where, SHOW_SQL);
 		jdbc.commit();
 		return obj;
 	}
 	
 	public <E extends BaseEntity>  Optional<E> update(E object, List<SQLWhereCondition> where) throws Exception {
-		Optional<E> obj = jdbc.mergeObject(object, where, SHOW_SQL);
+		Optional<E> obj = jdbc.update(object, where, SHOW_SQL);
 		jdbc.commit();
 		return obj;
 	}
 	
 	public  <E extends BaseEntity>  Optional<E> update(E object, Object value) throws Exception {
-		Optional<E> obj = jdbc.mergeObject(object, value, SHOW_SQL);
+		Optional<E> obj = jdbc.update(object, value, SHOW_SQL);
 		jdbc.commit();
 		return obj;
 	}
@@ -70,12 +70,17 @@ public class BaseDAO  {
 	}
 
 	public <E extends BaseEntity>   void delete(Class<E> clazz, SQLWhereCondition where) throws SQLException {
-		jdbc.deleteObject(clazz, where, SHOW_SQL);
+		jdbc.delete(clazz, where, SHOW_SQL);
 		jdbc.commit();
 	}
 	
 	public <E extends BaseEntity>   void delete(Class<E> clazz, Object VALUE) throws SQLException {
-		jdbc.deleteObject(clazz, VALUE, SHOW_SQL);
+		jdbc.delete(clazz, VALUE, SHOW_SQL);
+		jdbc.commit();
+	}
+	
+	public <E extends BaseEntity>   void delete(Class<E> clazz, List<SQLWhereCondition> where) throws SQLException {
+		jdbc.delete(clazz, where, SHOW_SQL);
 		jdbc.commit();
 	}
 	
