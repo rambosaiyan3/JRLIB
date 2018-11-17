@@ -43,7 +43,7 @@ public class SQLScripts {
 		// we have to remove the primary key, to avoid the
 		// MySQLIntegrityConstraintViolationException when insert
 		// we do not need the primary key of the table when inserting or updating
-		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
 		SQLUtils.removePrimaryKeyFromList(javaFields, PK_NAME);
 
 		StringBuilder columns = new StringBuilder(" ( ");
@@ -86,7 +86,7 @@ public class SQLScripts {
 		SQLJavaStatement javaStatement = new SQLJavaStatement();
 		
 		// get the name of the primary key
-		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
 		
 		// we remove the primary key
 		SQLUtils.removePrimaryKeyFromList(fields, PK_NAME);
@@ -117,7 +117,7 @@ public class SQLScripts {
 		SQLJavaStatement javaStatement = new SQLJavaStatement();
 		List<Object> values = new ArrayList<>();
 
-		final String PK_NAME = SQLClassHelper.getPrimaryKey(OBJECT.getClass()).getName();
+		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
 		SQLUtils.removePrimaryKeyFromList(javaField, PK_NAME);
 
 		javaField.forEach(item -> {
