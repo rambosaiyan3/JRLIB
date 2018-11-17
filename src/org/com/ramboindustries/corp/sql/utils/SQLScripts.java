@@ -12,7 +12,7 @@ import java.util.Set;
 
 import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.SQLJavaStatement;
-import org.com.ramboindustries.corp.sql.SQLWhereCondition;
+import org.com.ramboindustries.corp.sql.abstracts.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;

@@ -12,12 +12,14 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
+import org.com.ramboindustries.corp.sql.abstracts.SQLBasicWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLConnection;
+import org.com.ramboindustries.corp.sql.abstracts.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
-import org.com.ramboindustries.corp.sql.enums.SQLConditionType;
+import org.com.ramboindustries.corp.sql.enums.SQLBasicConditionType;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
@@ -153,7 +155,7 @@ public final class JDBCConnection {
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 		
 		// creates a where condition
-		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
+		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
 		return this.<E>findOne(CLAZZ, WHERE, SHOW_SQL);
 	}
 	
@@ -338,7 +340,7 @@ public final class JDBCConnection {
 		}
 
 		// creates a where condition to find the last register
-		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, maxID, SQLConditionType.EQUAL);
+		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, maxID, SQLBasicConditionType.EQUAL);
 
 		// return the register and convert to object
 		return this.<E>findOne(CLAZZ, WHERE, SHOW_SQL);
@@ -398,7 +400,7 @@ public final class JDBCConnection {
 		
 		// we get the primary key name
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
-		SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
+		SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
 		this.<E>delete(CLAZZ, WHERE, SHOW_SQL);
 		
 	}
@@ -447,8 +449,8 @@ public final class JDBCConnection {
 		final String PRIMARY_KEY_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
 		// creates a where condition to find the row that was updated
-		final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE,
-				SQLConditionType.EQUAL);
+		final SQLWhereCondition WHERE_CONDITION = new SQLBasicWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE,
+				SQLBasicConditionType.EQUAL);
 
 		// return the object with all its relationships
 		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
@@ -466,7 +468,7 @@ public final class JDBCConnection {
 		
 		// get the name of the primary kery
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
-		final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLConditionType.EQUAL);
+		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
 		return this.<E>update(OBJECT, WHERE, SHOW_SQL);
 	}
 	
@@ -505,8 +507,8 @@ public final class JDBCConnection {
 		final String PRIMARY_KEY_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
 		// creates a where condition to find the row that was updated
-		final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE,
-				SQLConditionType.EQUAL);
+		final SQLWhereCondition WHERE_CONDITION = new SQLBasicWhereCondition(PRIMARY_KEY_NAME, PRIMARY_KEY_VALUE,
+				SQLBasicConditionType.EQUAL);
 
 		// return the object with all its relationships
 		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
@@ -548,8 +550,8 @@ public final class JDBCConnection {
 						ACTUAL_FIELD.getType());
 
 				// creates a where condition
-				final SQLWhereCondition WHERE_CONDITION = new SQLWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,
-						SQLConditionType.EQUAL);
+				final SQLWhereCondition WHERE_CONDITION = new SQLBasicWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,
+						SQLBasicConditionType.EQUAL);
 
 				final Object VALUE = this.getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, CLAZZ, SHOW_SQL);
 
@@ -623,7 +625,7 @@ public final class JDBCConnection {
 			final String PK_NAME = SQLUtils.getPrimaryKeyName(RELATIONSHIP);
 
 			// creates a where condition to find the value of relationship
-			final SQLWhereCondition WHERE = new SQLWhereCondition(PK_NAME, VALUE, SQLConditionType.EQUAL);
+			final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, VALUE, SQLBasicConditionType.EQUAL);
 
 			// Class that declared the field, so we have to pass it here
 			final Class<?> DECLARING_CLASS = FIELD.getDeclaringClass();
