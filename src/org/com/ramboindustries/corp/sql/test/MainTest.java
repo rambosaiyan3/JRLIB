@@ -39,34 +39,32 @@ public class MainTest {
 		user.setLogin("kernelpanic_r");
 		user = base.update(user, 1L).get();
 
-		// user = base.update(user, new ArrayList<>(
-		// Arrays.asList(new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL),
-		// new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL)))).get();
 
 		user = new User();
 		user.setLogin("kernel");
 		user.setName("Mate");
 		user.setPassword("fa");
 
-		user = base.save(user).get();
+		base.save(user);
+		
+		user.setLogin("kernelppp");
+		user.setName("Carlos");
+		base.save(user);
+		user.setLogin("kernelPanic_R");
+		user.setName("Bolsonaro");
+		base.save(user);
 
-//		base.delete(User.class, new ArrayList<>(Arrays.asList(new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL), new SQLWhereCondition("USER_ID", 1, SQLConditionType.EQUAL))));
-		// base.delete(User.class, 1L);
-
-		SQLWhereCondition where = new SQLComplexWhereCondition("USER_ID", 1l, 10L, SQLComplexConditionType.BETWEEN,
-				SQLOperator.AND);
-		User uu = base.find(User.class, where).get();
-		System.out.println(uu.getLogin());
-
-		base.find(User.class, new SQLUniqueWhereCondition("USER_ID", SQLUniqueConditionType.IS_NULL));
-		base.find(User.class, new SQLBasicWhereCondition("USER_ID", 1L, SQLBasicConditionType.EQUAL));
 
 		List<SQLWhereCondition> wheres = new ArrayList<>();
-		wheres.add(new SQLComplexWhereCondition("USER_ID", 1L, 2l, SQLComplexConditionType.BETWEEN, SQLOperator.AND));
-		wheres.add(new SQLBasicWhereCondition("LOGIN", "%kernel", SQLBasicConditionType.LIKE));
+		wheres.add(new SQLComplexWhereCondition("USER_ID", 1L, 12l, SQLComplexConditionType.BETWEEN, SQLOperator.AND));
+		wheres.add(new SQLBasicWhereCondition("LOGIN", "%kernel%", SQLBasicConditionType.LIKE));
 		wheres.add(new SQLUniqueWhereCondition("PASSWORD", SQLUniqueConditionType.IS_NOT_NULL));
-
-		base.findList(User.class, wheres);
+		wheres.add(new SQLUniqueWhereCondition("SALARY", SQLUniqueConditionType.IS_NULL));
+		
+		base.findList(User.class, wheres).forEach(x -> {
+			System.out.println(x.getId());
+			System.out.println(x.getLogin());
+		});;
 
 	}
 

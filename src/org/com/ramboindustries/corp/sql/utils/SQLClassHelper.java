@@ -139,8 +139,8 @@ public class SQLClassHelper {
 	
 	private static String createColumn(final Field FIELD, final SQLType SQL_TYPE, boolean isLength) {
 		if (isLength)
-			return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ")";
-		return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType();
+			return FIELD.getName() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ")";
+		return FIELD.getName() + " " + SQL_TYPE.getSqlType();
 	}
 	
 	private static String createColumnPrecision(final SQLColumn COLUMN, final SQLType SQL_TYPE) {
@@ -148,7 +148,7 @@ public class SQLClassHelper {
 					+ isColumnRequired(COLUMN);
 	}
 	private static String createColumnPrecision(final Field FIELD, final SQLType SQL_TYPE) {
-		return FIELD.getName().toUpperCase() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ",2)";
+		return FIELD.getName() + " " + SQL_TYPE.getSqlType() + "(" + SQL_TYPE.defaultSize() + ",2)";
 	}
 	
 	
