@@ -3,6 +3,7 @@ package org.com.ramboindustries.corp.sql.utils;
 import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.util.List;
 
 import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
@@ -10,7 +11,9 @@ import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
+import org.com.ramboindustries.corp.sql.exceptions.SQLKeywordException;
 import org.com.ramboindustries.corp.sql.types.SQLDataStructure;
+import org.com.ramboindustries.corp.sql.types.SQLKeywords;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.sql.types.SQLType;
 import org.com.ramboindustries.corp.sql.types.TypeClass;
@@ -28,8 +31,9 @@ public class SQLClassHelper {
 	 * 
 	 * @param field that will be converted to column
 	 * @return a string that represents the column
+	 * @throws SQLKeywordException 
 	 */
-	public static String attributeToSQLColumn(final Field FIELD, final SQLSystem SYSTEM) {
+	public static String attributeToSQLColumn(final Field FIELD, final SQLSystem SYSTEM) throws SQLKeywordException {
 		return transformJavaFieldToSqlColumn(FIELD, SYSTEM);
 	}
 
@@ -75,8 +79,9 @@ public class SQLClassHelper {
 	 * @param field
 	 * @param clazz
 	 * @return
+	 * @throws SQLKeywordException 
 	 */
-	public static String attributeToSQLColumn(Field field, Class<?> clazz, final SQLSystem SYSTEM) {
+	public static String attributeToSQLColumn(Field field, Class<?> clazz, final SQLSystem SYSTEM) throws SQLKeywordException {
 		if (field.isAnnotationPresent(SQLIdentifier.class) && clazz.isAnnotationPresent(SQLInheritancePK.class)) {
 			SQLInheritancePK COLUMN = clazz.getAnnotation(SQLInheritancePK.class);
 			// set the ENUM used by user
@@ -90,7 +95,7 @@ public class SQLClassHelper {
 
 	}
 
-	private static String transformJavaFieldToSqlColumn(final Field FIELD, final SQLSystem SYSTEM) {
+	private static String transformJavaFieldToSqlColumn(final Field FIELD, final SQLSystem SYSTEM) throws SQLKeywordException  {
 		
 		// set the ENUM used
 		SQLType sqlType = setSQLTypeEnum(SYSTEM, FIELD.getType());
@@ -151,14 +156,32 @@ public class SQLClassHelper {
 	}
 	
 	
-	private static String createColumnByFieldType(final Field FIELD,  SQLType sqlType, final SQLSystem SYSTEM) {
+	private static String createColumnByFieldType(final Field FIELD,  SQLType sqlType, final SQLSystem SYSTEM) throws SQLKeywordException {
 		final String FIELD_NAME = FIELD.getType().getSimpleName();
-
+		
+		// the Structure type of SQL
+		SQLDataStructure dataStructure = setSQLDataStructure(SYSTEM);
+		
 		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
+			SQLIdentifier PK = FIELD.getAnnotation(SQLIdentifier.class);
+			
+			if(isUsingKeyword(PK.identifierName(), dataStructure)) {
+				// means that the column is using a invalid columns name
+				throw new SQLKeywordException(PK.identifierName(), SYSTEM);
+			}
+			
 			// if the field is a PRIMARY KEY
-			return createPrimaryKeyColumn(FIELD.getAnnotation(SQLIdentifier.class),sqlType, SQLDataDefinitionImpl.getDataDefinition(SYSTEM));
+			return createPrimaryKeyColumn(PK,sqlType, dataStructure);
+			
+			
 		} else if (FIELD.isAnnotationPresent(SQLColumn.class)) {
 			final SQLColumn COLUMN = FIELD.getAnnotation(SQLColumn.class);
+			
+			if(isUsingKeyword(COLUMN.name(), dataStructure)) {
+				// means that the column is using a invalid columns name
+				throw new SQLKeywordException(COLUMN.name(), SYSTEM);
+			}
+			
 			if(isEnum(FIELD)) {
 				// if the field is a ENUM type
 				return createColumn(COLUMN, sqlType, false);
@@ -179,10 +202,20 @@ public class SQLClassHelper {
 		} else if(FIELD.isAnnotationPresent(SQLForeignKey.class)) {
 			
 			final SQLForeignKey COLUMN = FIELD.getAnnotation(SQLForeignKey.class);
+			
+			if(isUsingKeyword(COLUMN.name(), dataStructure)) {
+				throw new SQLKeywordException(COLUMN.name(), SYSTEM);
+			}
+			
 			// get the type of the primary key that references ant set to the SQL type
 			sqlType = SQLMySqlType.getSqlType(getPrimaryKey(FIELD.getType()).getType());
 			return createForeignKeyColumn(COLUMN, sqlType);
 		} else {
+			
+			if(isUsingKeyword(FIELD.getName(), dataStructure)) {
+				throw new SQLKeywordException(FIELD.getName(), SYSTEM);
+			}
+			
 			if(isEnum(FIELD)) {
 				return createColumn(FIELD, sqlType, false);
 			}
@@ -226,6 +259,11 @@ public class SQLClassHelper {
 	
 	private static boolean isEnum(final Field FIELD) {
 		return FIELD.getType().isEnum();
+	}
+	
+	private static boolean isUsingKeyword(final String field, SQLDataStructure dataStructure) {
+		SQLKeywords key = (String x, List<String> keys) -> keys.contains(x);
+		return key.isUsingSQLKeyword(field.toUpperCase(), dataStructure.keywords());	
 	}
 	
 	
