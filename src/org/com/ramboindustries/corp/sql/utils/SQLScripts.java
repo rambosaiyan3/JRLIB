@@ -1,7 +1,7 @@
 package org.com.ramboindustries.corp.sql.utils;
 
+import static org.com.ramboindustries.corp.sql.utils.ObjectAccessUtils.getAllFieldFromClassAndSuperClass;
 import static org.com.ramboindustries.corp.sql.utils.SQLUtils.getTableName;
-import static org.com.ramboindustries.corp.utils.ObjectAccessUtils.getAllFieldFromClassAndSuperClass;
 
 import java.beans.IntrospectionException;
 import java.lang.reflect.Field;
