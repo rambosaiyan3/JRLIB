@@ -19,6 +19,7 @@ import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
+import org.com.ramboindustries.corp.sql.exceptions.SQLKeywordException;
 
 /**
  * Class that contain the SQLs scripts
@@ -141,8 +142,9 @@ public class SQLScripts {
 	 * @param clazz
 	 * @return
 	 * @throws SQLIdentifierException
+	 * @throws SQLKeywordException 
 	 */
-	public String createSQLTableScript(Class<?> clazz, final SQLSystem SYSTEM) throws SQLIdentifierException {
+	public String createSQLTableScript(Class<?> clazz, final SQLSystem SYSTEM) throws SQLIdentifierException, SQLKeywordException {
 		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
