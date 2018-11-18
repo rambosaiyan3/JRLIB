@@ -1,20 +1,18 @@
 package org.com.ramboindustries.corp.sql.enums;
 
-public enum SQLConditionType {
+public enum SQLBasicConditionType {
 
 	EQUAL(" = "),
+	DIFFERENT(" != "),
 	LIKE(" LIKE "),
-	BETWEEN(" BETWEEN "),
-	IS_NULL(" IS NULL "),
 	GREATER_THAN(" > "),
 	LESS_THAN(" < "),
 	GREATER_THAN_OR_EQUAL(" >= "),
-	LESS_THAN_OR_EQUAL(" <= "),
-	IN(" IN ");
+	LESS_THAN_OR_EQUAL(" <= ");
 	
 	private String type;
 	
-	private SQLConditionType(String type) {
+	private SQLBasicConditionType(String type) {
 		this.type = type;
 	}
 	
