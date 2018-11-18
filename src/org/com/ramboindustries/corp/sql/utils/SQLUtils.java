@@ -35,18 +35,18 @@ public final class SQLUtils {
 	private SQLUtils() {}
 
 	private static String createWhereByType(final SQLBasicWhereCondition WHERE) {
-		return WHERE.getConditionType().getType() + " ?";
+		return WHERE.getConditionType().getType() + " ? ";
 	}
 	
 	private static String createWhereByType(final SQLComplexWhereCondition WHERE) {
-		return WHERE.getConditionType().getType() + " ? " + WHERE.getSQLOperator().getOperator() + " ?;";
+		return WHERE.getConditionType().getType() + " ? " + WHERE.getSQLOperator().getOperator() + " ? ";
 	}
 	
 	private static String createWhereByType(final SQLUniqueWhereCondition WHERE) {
-		return WHERE.getConditionType().getType() + ";";
+		return WHERE.getConditionType().getType();
 	}
 	
-	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
+	private static String createCondition(final SQLWhereCondition WHERE_CONDITION) {
 		String where = null;
 		if(WHERE_CONDITION instanceof SQLBasicWhereCondition) {
 			where = createWhereByType((SQLBasicWhereCondition)WHERE_CONDITION);
@@ -55,16 +55,20 @@ public final class SQLUtils {
 		} else {
 			where = createWhereByType((SQLUniqueWhereCondition)WHERE_CONDITION);
 		}
-		return SQLDataManipulationCons.WHERE + WHERE_CONDITION.getFieldName() + " " + where;
+		return WHERE_CONDITION.getFieldName() + " " + where;
 	}
 
+	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
+		return SQLDataManipulationCons.WHERE + createCondition(WHERE_CONDITION) + ";";
+	}
+	
 	
 	
 	protected static String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
 		StringBuilder builder = new StringBuilder(" " + SQLDataManipulationCons.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( " AND ");
-			builder.append(createWhereCondition(WHERE));
+			builder.append(createCondition(WHERE));
 		});
 		return builder.toString();
 	}
@@ -294,6 +298,12 @@ public final class SQLUtils {
 		else return "PK_" + getTableName(CLAZZ);
 	}
 	
+	/**
+	 * When sending data of a object to database
+	 * @param values a list of values from object
+	 * @param statement
+	 * @throws SQLException
+	 */
 	public static void createPreparedStatementObject(List<Object> values, PreparedStatement statement) throws SQLException {
 		for(int i = 0; i < values.size(); i++) {
 			setPreparedStatementType(values.get(i), statement, i + 1);
@@ -306,6 +316,7 @@ public final class SQLUtils {
 		}else if( where instanceof SQLComplexWhereCondition ) {
 			preparedStatementByWhereType((SQLComplexWhereCondition)where, statement, position);
 		}
+		// the SQLUniqueWhereCondition does not have a statement
 	}	
 	
 	private static void preparedStatementByWhereType(SQLBasicWhereCondition where, PreparedStatement statement, int position) throws SQLException {
@@ -313,16 +324,25 @@ public final class SQLUtils {
 	}
 	
 	private static void preparedStatementByWhereType(SQLComplexWhereCondition where, PreparedStatement statement, int position) throws SQLException {
-		setPreparedStatementType(where.getLelfValue(), statement, position++);
+		setPreparedStatementType(where.getLeftValue(), statement, position++);
 		setPreparedStatementType(where.getRightValue(), statement, position);
 	}
 	
 	public static void createPreparedStatementWhereCondition(List<SQLWhereCondition> wheres, PreparedStatement statement, int position) throws SQLException {
 		for(int i = 0; i < wheres.size(); i++) {
 			createPreparedStatementWhereCondition(wheres.get(i), statement, position++);
+			// TODO
+			if(wheres.get(i) instanceof SQLComplexWhereCondition) position++;
 		}
 	}
 
+	/**
+	 * Set the type of the object that has to be send to database
+	 * @param value
+	 * @param statement
+	 * @param position
+	 * @throws SQLException
+	 */
 	private static void setPreparedStatementType(Object value, PreparedStatement statement, int position) throws SQLException {
 		
 			if(Objects.isNull(value)) {

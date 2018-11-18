@@ -25,6 +25,10 @@ public class BaseDAO  {
 		return jdbc.select(clazz, SHOW_SQL);
 	}
 
+	public <E extends BaseEntity>  List<E> findList(Class<E> clazz, List<SQLWhereCondition> WHERE) throws SQLException {
+		return jdbc.select(clazz, WHERE, SHOW_SQL);
+	}
+	
 	public <E extends BaseEntity>  void createTable(Class<E> clazz) throws Exception {
 		jdbc.createSQLTable(clazz, SHOW_SQL);
 		jdbc.commit();

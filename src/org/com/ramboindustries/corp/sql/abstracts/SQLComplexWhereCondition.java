@@ -5,22 +5,22 @@ import org.com.ramboindustries.corp.sql.enums.SQLOperator;
 
 public class SQLComplexWhereCondition extends SQLWhereCondition {
 
-	private Object lelfValue;
+	private Object leftValue;
 	private Object rightValue;
 	private SQLComplexConditionType conditionType;
 	private SQLOperator sqlOperator;
 
-	public SQLComplexWhereCondition(String fieldName, Object lelfValue, Object rightValue,
+	public SQLComplexWhereCondition(String fieldName, Object leftValue, Object rightValue,
 			SQLComplexConditionType conditionType, SQLOperator sqlOperator) {
 		super(fieldName);
-		this.lelfValue = lelfValue;
+		this.leftValue = leftValue;
 		this.rightValue = rightValue;
 		this.conditionType = conditionType;
 		this.sqlOperator = sqlOperator;
 	}
 
-	public Object getLelfValue() {
-		return lelfValue;
+	public Object getLeftValue() {
+		return leftValue;
 	}
 
 	public Object getRightValue() {
