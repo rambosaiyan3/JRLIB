@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.utils;
+package org.com.ramboindustries.corp.sql.utils;
 
 
 import java.beans.IntrospectionException;
@@ -19,7 +19,6 @@ import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 
 /**
  * @author kernelpanic_r

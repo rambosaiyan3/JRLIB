@@ -13,8 +13,7 @@ import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.types.SQLDataStructure;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.sql.types.SQLType;
-import org.com.ramboindustries.corp.text.TypeClass;
-import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
+import org.com.ramboindustries.corp.sql.types.TypeClass;
 import org.com.ramboindustries.corp.sql.types.SQLDataDefinitionImpl;
 
 /**

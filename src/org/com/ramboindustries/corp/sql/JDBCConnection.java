@@ -23,11 +23,11 @@ import org.com.ramboindustries.corp.sql.enums.SQLBasicConditionType;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
+import org.com.ramboindustries.corp.sql.utils.ObjectAccessUtils;
 import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
 import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
-import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
 
 /**
  * 

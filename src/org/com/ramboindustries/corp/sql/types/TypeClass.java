@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.text;
+package org.com.ramboindustries.corp.sql.types;
 
 public enum TypeClass {
 

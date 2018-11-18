@@ -23,8 +23,7 @@ import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
 import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
-import org.com.ramboindustries.corp.text.TypeClass;
-import org.com.ramboindustries.corp.utils.ObjectAccessUtils;
+import org.com.ramboindustries.corp.sql.types.TypeClass;
 
 /**
  * Utility to work with SQL
