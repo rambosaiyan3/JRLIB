@@ -49,7 +49,7 @@ class JDBCConnection {
 	}
 
 	 
-	protected void openConnection() throws SQLException {
+	public void openConnection() throws SQLException {
 		if (connection == null || connection.isClosed()) {
 			connection = new SQLConnectionFactory().getConnection(sqlConnection);
 			connection.setAutoCommit(autoCommit);
@@ -62,17 +62,21 @@ class JDBCConnection {
 			connection.close();
 	}
 
-	 
 	public void commit() throws SQLException {
-		connection.commit();
+		if (autoCommit) {
+			SQLLogger.showCantCommitOrRollback();
+		} else {
+			connection.commit();
+			SQLLogger.showCommit();
+		}
 	}
 
-	 
-	public void rollback()  {
-		try {
+	public void rollback() throws SQLException {
+		if (autoCommit) {
+			SQLLogger.showCantCommitOrRollback();
+		} else {
 			connection.rollback();
-		} catch (SQLException e) {
-			e.printStackTrace();
+			SQLLogger.showRollback();
 		}
 	}
 
