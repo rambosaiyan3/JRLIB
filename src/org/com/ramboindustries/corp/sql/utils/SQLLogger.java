@@ -1,5 +1,7 @@
 package org.com.ramboindustries.corp.sql.utils;
 
+import java.sql.SQLException;
+
 /**
  * Simple Log manager for SQLs queries
  * @author kernelpanic_r
@@ -7,41 +9,43 @@ package org.com.ramboindustries.corp.sql.utils;
  */
 public final class SQLLogger {
 
-	private final  String INIT = "*|-|*|-|*|-|*|-|* INIT > > > > >";
-	private final  String END = "< < < < < END *|-|*|-|*|-|*|-|*";
-	private final  String MSG = "STARTING THE CONNECTION . . .";
-	private final  String ERROR = "AN ERROR OCURRED WHILE EXECUTING THE FOLLOWING SQL SCRIPT > > > > > ";
+	private static  final  String INIT = "*|-|*|-|*|-|*|-|* INIT > > > > >";
+	private static final  String END = "< < < < < END *|-|*|-|*|-|*|-|*";
+	private static final  String MSG = "STARTING THE CONNECTION . . .";
+	private static final  String ERROR = "AN ERROR OCURRED WHILE EXECUTING THE FOLLOWING SQL SCRIPT > > > > > ";
 	
 	
-	public void initConnection() {
+	public static void initConnection() {
 		System.out.println(INIT);
-		System.out.println(this.countSpaces(INIT) + MSG);
-		System.out.println(this.countSpaces(INIT + MSG) + END);
+		System.out.println(countSpaces(INIT) + MSG);
+		System.out.println(countSpaces(INIT + MSG) + END);
 	}
 	
-	public void showScript(final String SQL) {
+	public static void showScript(final String SQL) {
 		System.out.println(INIT);
-		System.out.println(this.countSpaces(INIT) + SQL);
-		System.out.println(this.countSpaces(INIT + SQL) + END);
+		System.out.println(countSpaces(INIT) + SQL);
+		System.out.println(countSpaces(INIT + SQL) + END);
 	}
 	
-	public void showDropTableScript(final String SQL) {
+	public static void showDropTableScript(final String SQL) {
 		System.out.println("  INIT PROCESS TO DROP TABLE > > > > > ");
 		System.out.println(SQL);
 		System.out.println(" < < < < < TABLE DROPPED! \n");
 	}
 	
-	public void showCreateTableScript(final String SQL) {
+	public static void showCreateTableScript(final String SQL) {
 		System.out.println(" INIT PROCESS TO CREATE A NEW TABLE > > > > >");
 		System.out.println(SQL);
 		System.out.println(" < < < < < A NEW TABLE WAS SUCCESSFULLY CREATED!\n ");
 	}
 	
-	public void showException(final String SQL) {
+	public static void showException(final String SQL, SQLException ex) {
 		System.out.println(ERROR + SQL + " < < < < <");
+		System.out.println("Exception name: " + ex.getMessage());
+		ex.printStackTrace();
 	}
 	
-	private String countSpaces(final String MSG) {
+	private static String countSpaces(final String MSG) {
 		final short LENGTH = (short)MSG.length();
 		StringBuilder b = new StringBuilder();
 		for(short i = 0; i < LENGTH; i++) {

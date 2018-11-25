@@ -1,6 +1,10 @@
 package org.com.ramboindustries.corp.sql.enums;
 
-
+/**
+ * Servers that the framework can work
+ * @author matheus_rambo
+ *
+ */
 public enum SQLSystem {
 	
 	MY_SQL("MySQL"),

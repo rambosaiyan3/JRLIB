@@ -10,13 +10,13 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
-import org.com.ramboindustries.corp.sql.SQLJavaField;
-import org.com.ramboindustries.corp.sql.SQLJavaStatement;
 import org.com.ramboindustries.corp.sql.abstracts.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIgnore;
-import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
-import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
+import org.com.ramboindustries.corp.sql.classsql.SQLJavaField;
+import org.com.ramboindustries.corp.sql.classsql.SQLJavaStatement;
+import org.com.ramboindustries.corp.sql.constants.SQL_DDL;
+import org.com.ramboindustries.corp.sql.constants.SQL_DML;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLKeywordException;
@@ -26,7 +26,7 @@ import org.com.ramboindustries.corp.sql.exceptions.SQLKeywordException;
  * @author kernelpanic_r
  *
  */
-public class SQLScripts {
+public final class SQLScripts {
 
 	/**
 	 * Creates an INSERT script for SQL
@@ -37,7 +37,7 @@ public class SQLScripts {
 	 * @throws InvocationTargetException
 	 * @throws IntrospectionException
 	 */
-	public <E> SQLJavaStatement createSQLInsertScript(final E OBJECT) throws Exception {
+	public static <E> SQLJavaStatement createSQLInsertScript(final E OBJECT) throws Exception {
 		Set<SQLJavaField> javaFields = getAllFieldFromClassAndSuperClass(OBJECT, false);
 		SQLJavaStatement javaStatement = new SQLJavaStatement();
 
@@ -61,8 +61,8 @@ public class SQLScripts {
 		values.append(")");
 
 		// set the Script for SQLPreparedStatement
-		javaStatement.setSql(SQLDataManipulationCons.INSERT + getTableName(OBJECT.getClass()) + columns.toString()
-				+ SQLDataManipulationCons.VALUES + values.toString() + ";");
+		javaStatement.setSql(SQL_DML.INSERT + getTableName(OBJECT.getClass()) + columns.toString()
+				+ SQL_DML.VALUES + values.toString() + ";");
 		// set the values
 		javaStatement.setValues(javaValues);
 		return javaStatement;
@@ -79,7 +79,7 @@ public class SQLScripts {
 	 * @throws IntrospectionException
 	 * @throws SQLIdentifierException 
 	 */
-	public <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws Exception {
+	public static <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final SQLWhereCondition WHERE) throws Exception {
 		// all the fields
 		Set<SQLJavaField> fields = getAllFieldFromClassAndSuperClass(OBJECT, false);
 		
@@ -93,7 +93,7 @@ public class SQLScripts {
 		SQLUtils.removePrimaryKeyFromList(fields, PK_NAME);
 		
 		// create a default SQL update 
-		StringBuilder sql = new StringBuilder(SQLDataManipulationCons.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulationCons.SET);
+		StringBuilder sql = new StringBuilder(SQL_DML.UPDATE + getTableName(OBJECT.getClass()) + SQL_DML.SET);
 		
 		// init a list of the values
 		List<Object> values = new ArrayList<>();
@@ -111,10 +111,10 @@ public class SQLScripts {
 		return javaStatement;
 	}
 	
-	public <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
+	public static <E> SQLJavaStatement createSQLUpdateScript(final E OBJECT, final List<SQLWhereCondition> WHERE) throws Exception {
 
 		Set<SQLJavaField> javaField = getAllFieldFromClassAndSuperClass(OBJECT, false);	
-		StringBuilder sql = new StringBuilder(SQLDataManipulationCons.UPDATE + getTableName(OBJECT.getClass()) + SQLDataManipulationCons.SET);
+		StringBuilder sql = new StringBuilder(SQL_DML.UPDATE + getTableName(OBJECT.getClass()) + SQL_DML.SET);
 		SQLJavaStatement javaStatement = new SQLJavaStatement();
 		List<Object> values = new ArrayList<>();
 
@@ -144,11 +144,11 @@ public class SQLScripts {
 	 * @throws SQLIdentifierException
 	 * @throws SQLKeywordException 
 	 */
-	public String createSQLTableScript(Class<?> clazz, final SQLSystem SYSTEM) throws SQLIdentifierException, SQLKeywordException {
+	public static String createSQLTableScript(Class<?> clazz, final SQLSystem SYSTEM) throws SQLIdentifierException, SQLKeywordException {
 		List<Field> fields = SQLUtils.allFieldsToTable(clazz);
 		StringBuilder sql = new StringBuilder();
 
-		sql.append(SQLDataDefinitionCons.CREATE_TABLE + getTableName(clazz) + " (\n");
+		sql.append(SQL_DDL.CREATE_TABLE + getTableName(clazz) + " (\n");
 
 		// the first element will always be the 1
 		Field primaryKey = fields.get(0);
@@ -196,8 +196,8 @@ public class SQLScripts {
 	 * @param CLAZZ
 	 * @return
 	 */
-	public <E> String createSQLDropTableScript(final Class<E> CLAZZ) {
-		return SQLDataDefinitionCons.DROP_TABLE_IF_EXISTS + getTableName(CLAZZ) + " ;";
+	public static <E> String createSQLDropTableScript(final Class<E> CLAZZ) {
+		return SQL_DDL.DROP_TABLE_IF_EXISTS + getTableName(CLAZZ) + " ;";
 	}
 	
 	
@@ -206,32 +206,32 @@ public class SQLScripts {
 	 * @param CLAZZ that represents the TABLE
 	 * @return the SCRIPT
 	 */
-	public <E> String createSQLSelectScript(final Class<E> CLAZZ) {
-		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + ";";
+	public static <E> String createSQLSelectScript(final Class<E> CLAZZ) {
+		return SQL_DML.SELECT_FROM + getTableName(CLAZZ) + ";";
 	}
 
-	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
-		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
+	public static <E>String createSQLSelectScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
+		return SQL_DML.SELECT_FROM + getTableName(CLAZZ) + SQLUtils.createWhereCondition(WHERE);
 	}
 
-	public <E>String createSQLSelectScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
+	public static <E>String createSQLSelectScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		final String CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulationCons.SELECT_FROM + getTableName(CLAZZ) + CONDITIONS + ";";
+		return SQL_DML.SELECT_FROM + getTableName(CLAZZ) + CONDITIONS + ";";
 	}
 	
-	public <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {
+	public static <E> String createSQLMaxSelectScript(final Class<E> CLAZZ) throws SQLIdentifierException {
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
-		return SQLDataManipulationCons.SELECT_MAX +  "(" + PK_NAME + ")" +  SQLDataManipulationCons.FROM +  getTableName(CLAZZ) + ";"; 
+		return SQL_DML.SELECT_MAX +  "(" + PK_NAME + ")" +  SQL_DML.FROM +  getTableName(CLAZZ) + ";"; 
 	}
 	
-	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
+	public static <E> String createSQLDeleteScript(final Class<E> CLAZZ, final SQLWhereCondition WHERE) {
 		final String WHERE_CONDITION = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulationCons.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
+		return SQL_DML.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITION + " ;";
 	}
 	
-	public <E> String createSQLDeleteScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
+	public static <E> String createSQLDeleteScript(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) {
 		final String WHERE_CONDITIONS = SQLUtils.createWhereCondition(WHERE);
-		return SQLDataManipulationCons.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITIONS + " ;";
+		return SQL_DML.DELETE_FROM + getTableName(CLAZZ) + " " + WHERE_CONDITIONS + " ;";
 	}
 	
 }

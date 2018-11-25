@@ -1,5 +1,10 @@
 package org.com.ramboindustries.corp.sql.enums;
 
+/**
+ * ENUM to work with basic logical conditions
+ * @author matheus_rambo
+ *
+ */
 public enum SQLBasicConditionType {
 
 	EQUAL(" = "),

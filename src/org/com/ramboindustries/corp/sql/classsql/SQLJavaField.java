@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql;
+package org.com.ramboindustries.corp.sql.classsql;
 
 public class SQLJavaField {
 

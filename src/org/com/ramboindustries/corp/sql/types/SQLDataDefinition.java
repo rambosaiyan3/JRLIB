@@ -2,7 +2,7 @@ package org.com.ramboindustries.corp.sql.types;
 
 import java.util.List;
 
-public interface SQLDataStructure {
+public interface SQLDataDefinition {
 
 	/**
 	 * Maybe the increment key word is different from some SGDBS

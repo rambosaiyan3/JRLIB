@@ -9,11 +9,11 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
-import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
+import org.com.ramboindustries.corp.sql.constants.SQL_DDL;
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 import org.com.ramboindustries.corp.sql.exceptions.SQLKeywordException;
-import org.com.ramboindustries.corp.sql.types.SQLDataStructure;
-import org.com.ramboindustries.corp.sql.types.SQLKeywords;
+import org.com.ramboindustries.corp.sql.functional.SQLKeywords;
+import org.com.ramboindustries.corp.sql.types.SQLDataDefinition;
 import org.com.ramboindustries.corp.sql.types.SQLMySqlType;
 import org.com.ramboindustries.corp.sql.types.SQLType;
 import org.com.ramboindustries.corp.sql.types.TypeClass;
@@ -88,7 +88,7 @@ public class SQLClassHelper {
 			SQLType type = setSQLTypeEnum(SYSTEM, field.getType());
 			
 			// like SQL SERVER uses INCREMENT and MY_SQL uses AUTO_INCREMENT
-			SQLDataStructure data = setSQLDataStructure(SYSTEM);
+			SQLDataDefinition data = setSQLDataStructure(SYSTEM);
 			return createPrimaryKeyColumn(COLUMN, type, data);
 		}
 		return attributeToSQLColumn(field, SYSTEM);
@@ -105,12 +105,12 @@ public class SQLClassHelper {
 
 	// verifies if the column can be null
 	private static String isColumnRequired(final SQLColumn COLUMN) {
-		return COLUMN.required() ? SQLDataDefinitionCons.NOT_NULL : "";
+		return COLUMN.required() ? SQL_DDL.NOT_NULL : "";
 	}
 
 	// verifies if the foreign can be optional
 	private static String isColumnRequired(final SQLForeignKey FOREIGN_KEY) {
-		return FOREIGN_KEY.required() ? SQLDataDefinitionCons.NOT_NULL : "";
+		return FOREIGN_KEY.required() ? SQL_DDL.NOT_NULL : "";
 	}
 
 	// set the column length
@@ -122,8 +122,8 @@ public class SQLClassHelper {
 		return "(" + COLUMN.length() + "," + COLUMN.precision() + ")";
 	}
 
-	private static String createPrimaryKeyColumn(final SQLIdentifier PRIMARY_KEY, final SQLType SQL_TYPE, final SQLDataStructure SQL_DATA) {
- 		return PRIMARY_KEY.identifierName() + " " + SQL_TYPE.getSqlType() + " " + SQLDataDefinitionCons.NOT_NULL + SQL_DATA.increment();
+	private static String createPrimaryKeyColumn(final SQLIdentifier PRIMARY_KEY, final SQLType SQL_TYPE, final SQLDataDefinition SQL_DATA) {
+ 		return PRIMARY_KEY.identifierName() + " " + SQL_TYPE.getSqlType() + " " + SQL_DDL.NOT_NULL + SQL_DATA.increment();
 	}
 
 	private static String createForeignKeyColumn(final SQLForeignKey FOREIGN_KEY, final SQLType SQL_TYPE) {
@@ -137,8 +137,8 @@ public class SQLClassHelper {
 		return COLUMN.name() + " " + SQL_TYPE.getSqlType() + " " + isColumnRequired(COLUMN);
 	}
 
-	private static String createPrimaryKeyColumn(final SQLInheritancePK PRIMARY_KEY, final SQLType SQL_TYPE, final SQLDataStructure SQL_DATA) {
-			return PRIMARY_KEY.primaryKeyName() + " " + SQL_TYPE.getSqlType() + " " + SQLDataDefinitionCons.NOT_NULL + SQL_DATA.increment();
+	private static String createPrimaryKeyColumn(final SQLInheritancePK PRIMARY_KEY, final SQLType SQL_TYPE, final SQLDataDefinition SQL_DATA) {
+			return PRIMARY_KEY.primaryKeyName() + " " + SQL_TYPE.getSqlType() + " " + SQL_DDL.NOT_NULL + SQL_DATA.increment();
 	}
 	
 	private static String createColumn(final Field FIELD, final SQLType SQL_TYPE, boolean isLength) {
@@ -160,7 +160,7 @@ public class SQLClassHelper {
 		final String FIELD_NAME = FIELD.getType().getSimpleName();
 		
 		// the Structure type of SQL
-		SQLDataStructure dataStructure = setSQLDataStructure(SYSTEM);
+		SQLDataDefinition dataStructure = setSQLDataStructure(SYSTEM);
 		
 		if (FIELD.isAnnotationPresent(SQLIdentifier.class)) {
 			SQLIdentifier PK = FIELD.getAnnotation(SQLIdentifier.class);
@@ -248,7 +248,7 @@ public class SQLClassHelper {
 		}
 	}
 	
-	private static SQLDataStructure setSQLDataStructure(final SQLSystem SYSTEM) {
+	private static SQLDataDefinition setSQLDataStructure(final SQLSystem SYSTEM) {
 		switch (SYSTEM) {
 		case  MY_SQL:
 			return SQLDataDefinitionImpl.MY_SQL;
@@ -261,7 +261,7 @@ public class SQLClassHelper {
 		return FIELD.getType().isEnum();
 	}
 	
-	private static boolean isUsingKeyword(final String field, SQLDataStructure dataStructure) {
+	private static boolean isUsingKeyword(final String field, SQLDataDefinition dataStructure) {
 		SQLKeywords key = (String x, List<String> keys) -> keys.contains(x);
 		return key.isUsingSQLKeyword(field.toUpperCase(), dataStructure.keywords());	
 	}

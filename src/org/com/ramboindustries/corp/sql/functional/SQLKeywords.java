@@ -1,4 +1,4 @@
-package org.com.ramboindustries.corp.sql.types;
+package org.com.ramboindustries.corp.sql.functional;
 
 import java.util.List;
 

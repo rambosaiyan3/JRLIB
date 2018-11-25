@@ -6,7 +6,7 @@ import java.util.Objects;
 
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 
-public enum SQLDataDefinitionImpl implements SQLDataStructure {
+public enum SQLDataDefinitionImpl implements SQLDataDefinition {
 
 	MY_SQL(SQLSystem.MY_SQL) {
 

@@ -12,5 +12,5 @@ public @interface SQLIgnore {
 	/**
 	 * Use this to ignore List, Set and whatever you want
 	 */
-
+	
 }

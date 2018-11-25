@@ -1,6 +1,6 @@
-package org.com.ramboindustries.corp.sql.commands;
+package org.com.ramboindustries.corp.sql.constants;
 
-public final class SQLDataDefinitionCons {
+public final class SQL_DDL {
 
 	public static String CREATE_DATABASE = "CREATE DATABASE ";
 	public static String CREATE_DATABASE_IF_NOT_EXISTS = "CREATE DATABASE IF NOT EXISTS "; 
@@ -18,7 +18,7 @@ public final class SQLDataDefinitionCons {
 	public static String FOREIGN_KEY = " FOREIGN KEY ";
 	public static String REFERENCES = " REFERENCES ";
 	
-	private SQLDataDefinitionCons() {
+	private SQL_DDL() {
 		
 	}
 	
