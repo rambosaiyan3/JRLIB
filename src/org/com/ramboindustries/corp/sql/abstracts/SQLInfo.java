@@ -7,7 +7,7 @@ import org.com.ramboindustries.corp.sql.enums.SQLSystem;
  * @author matheus_rambo
  *
  */
-public abstract class SQLConnection {
+public abstract class SQLInfo {
 
 	private String driver;
 	private String url;
@@ -15,7 +15,7 @@ public abstract class SQLConnection {
 	private String password;
 	private SQLSystem system;
 	
-	public SQLConnection(String driver, String url, String user, String password, SQLSystem system) {
+	public SQLInfo(String driver, String url, String user, String password, SQLSystem system) {
 		super();
 		this.driver = driver;
 		this.url = url;

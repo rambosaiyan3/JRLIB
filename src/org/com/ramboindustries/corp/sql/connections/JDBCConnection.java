@@ -1,10 +1,10 @@
-package org.com.ramboindustries.corp.sql;
+package org.com.ramboindustries.corp.sql.connections;
 
-import java.beans.IntrospectionException;
+import static org.com.ramboindustries.corp.sql.utils.SQLLogger.showException;
+import static org.com.ramboindustries.corp.sql.utils.SQLLogger.showScript;
+
 import java.lang.reflect.Field;
-import java.lang.reflect.InvocationTargetException;
 import java.sql.Connection;
-import java.sql.DriverManager;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -13,16 +13,17 @@ import java.util.List;
 import java.util.Optional;
 
 import org.com.ramboindustries.corp.sql.abstracts.SQLBasicWhereCondition;
-import org.com.ramboindustries.corp.sql.abstracts.SQLConnection;
+import org.com.ramboindustries.corp.sql.abstracts.SQLInfo;
 import org.com.ramboindustries.corp.sql.abstracts.SQLWhereCondition;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
 import org.com.ramboindustries.corp.sql.annotations.SQLTable;
+import org.com.ramboindustries.corp.sql.classsql.SQLJavaStatement;
 import org.com.ramboindustries.corp.sql.enums.SQLBasicConditionType;
-import org.com.ramboindustries.corp.sql.enums.SQLSystem;
-import org.com.ramboindustries.corp.sql.exceptions.SQLScriptException;
 import org.com.ramboindustries.corp.sql.exceptions.SQLTableException;
+import org.com.ramboindustries.corp.sql.factory.SQLConnectionFactory;
+import org.com.ramboindustries.corp.sql.utils.JDBCUtils;
 import org.com.ramboindustries.corp.sql.utils.ObjectAccessUtils;
 import org.com.ramboindustries.corp.sql.utils.SQLClassHelper;
 import org.com.ramboindustries.corp.sql.utils.SQLLogger;
@@ -30,39 +31,29 @@ import org.com.ramboindustries.corp.sql.utils.SQLScripts;
 import org.com.ramboindustries.corp.sql.utils.SQLUtils;
 
 /**
- * 
+ * The final User can use this class explicit
  * @author kernelpanic_r
  *
  */
-public final class JDBCConnection {
+class JDBCConnection {
 
-	private final String URL;
-	private final String USER;
-	private final String PASS;
-	private final SQLScripts SQL_SCRIPTS = new SQLScripts();
-	private Connection connection;
-	private SQLSystem system;
+	private SQLInfo sqlConnection;
+	protected Connection connection;
+	private boolean SHOW_SQL;
+	protected boolean autoCommit;
 
-	private final SQLLogger SQL_LOGGER = new SQLLogger();
-
-	public JDBCConnection(final String URL, final String USER, final String PASS, SQLSystem system) {
-		this.URL = URL;
-		this.USER = USER;
-		this.PASS = PASS;
-		this.system = system;
-	}
-
-	public JDBCConnection(SQLConnection sqlConnection) {
-		URL = sqlConnection.getUrl();
-		USER = sqlConnection.getUser();
-		PASS = sqlConnection.getPassword();
-		system = sqlConnection.getSystem();
+	public JDBCConnection(SQLInfo sqlConnection, final boolean SHOW_SQL, final boolean autoCommit) {
+		this.sqlConnection = sqlConnection;
+		this.SHOW_SQL = SHOW_SQL;
+		this.autoCommit = autoCommit;
 	}
 
 	 
-	public void openConnection() throws SQLException {
-		connection = DriverManager.getConnection(URL, USER, PASS);
-		connection.setAutoCommit(false);
+	protected void openConnection() throws SQLException {
+		if (connection == null || connection.isClosed()) {
+			connection = new SQLConnectionFactory().getConnection(sqlConnection);
+			connection.setAutoCommit(autoCommit);
+		}
 	}
 
 	 
@@ -87,8 +78,7 @@ public final class JDBCConnection {
 
 	 
 	public ResultSet executeSQLSelect(final String SQL) throws SQLException {
-		if (connection == null)
-			this.openConnection();
+		openConnection();
 		return connection.createStatement().executeQuery(SQL);
 	}
 
@@ -98,8 +88,7 @@ public final class JDBCConnection {
 
 	 
 	public void executeSQL(final String SQL) throws SQLException {
-		if (connection == null)
-			this.openConnection();
+		openConnection();
 		connection.prepareStatement(SQL).executeUpdate();
 	}
 
@@ -109,11 +98,14 @@ public final class JDBCConnection {
 	}
 
 	 
-	public <E> Optional<E> findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION, final boolean SHOW_SQL)
+	protected <E> Optional<E> findOne(final Class<E> CLAZZ, final SQLWhereCondition SQL_WHERE_CONDITION)
 			throws SQLException {
 
+		// open the connection
+		openConnection();
+		
 		// Creates the SQL Script
-		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
+		final String SCRIPT = SQLScripts.<E>createSQLSelectScript(CLAZZ, SQL_WHERE_CONDITION);
 
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 
@@ -122,9 +114,7 @@ public final class JDBCConnection {
 		// so, we use a single ?
 		SQLUtils.createPreparedStatementWhereCondition(SQL_WHERE_CONDITION, statement, 1);
 
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-
+		if (SHOW_SQL) showScript(SCRIPT);
 		try {
 
 			// Gets all the fields from class
@@ -136,36 +126,36 @@ public final class JDBCConnection {
 				// if no result was found
 				return Optional.empty();
 			}
-			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ);
 			
 			close(statement, RESULT_SET);
 			return Optional.of(result);
 			
 		} catch (SQLException e) {
-			SQL_LOGGER.showException(SCRIPT);
+			showException(SCRIPT, e);
 			throw new SQLException(e);
 		} catch (Exception e) {
 			throw new SQLException(e);
 		}
 	}
 
-	public <E> Optional<E> findOne(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE, boolean SHOW_SQL) throws SQLException {
+	protected <E> Optional<E> findOne(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE) throws SQLException {
 		
 		// find for name the Primary Key of the class
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 		
 		// creates a where condition
 		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
-		return this.<E>findOne(CLAZZ, WHERE, SHOW_SQL);
+		return this.<E>findOne(CLAZZ, WHERE);
 	}
 	
 	 
-	public <E> Optional<E> findOne(Class<E> CLAZZ, List<SQLWhereCondition> WHERE, boolean SHOW_SQL) throws SQLException {
+	protected <E> Optional<E> findOne(Class<E> CLAZZ, List<SQLWhereCondition> WHERE) throws SQLException {
 
-		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ, WHERE);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
-
+		openConnection();
+		
+		final String SCRIPT = SQLScripts.<E>createSQLSelectScript(CLAZZ, WHERE);
+		if (SHOW_SQL) showScript(SCRIPT);
 		try {
 
 			PreparedStatement statement = connection.prepareStatement(SCRIPT);
@@ -184,12 +174,12 @@ public final class JDBCConnection {
 				return Optional.empty();
 			}
 			
-			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, false);
+			E result = createObjectFromLine(RESULT_SET, FIELDS, CLAZZ);
 			close(statement, RESULT_SET);
 			return Optional.of(result);
 	
 		} catch (SQLException e) {
-			SQL_LOGGER.showException(SCRIPT);
+			showException(SCRIPT, e);
 			throw new SQLException(e);
 		} catch (Exception e) {
 			throw new SQLException(e);
@@ -205,10 +195,9 @@ public final class JDBCConnection {
 	 * @throws SQLException
 	 */
 	 
-	public <E> List<E> select(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.<E>createSQLSelectScript(CLAZZ);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
+	protected <E> List<E> select(final Class<E> CLAZZ) throws SQLException {
+		final String SCRIPT = SQLScripts.<E>createSQLSelectScript(CLAZZ);
+		if (SHOW_SQL) showScript(SCRIPT);
 
 		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
@@ -220,7 +209,7 @@ public final class JDBCConnection {
 
 		while (RESULT_SET.next()) {
 			try {
-				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
+				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ));
 			} catch (Exception e) {
 				e.printStackTrace();
 				throw new SQLException(e);
@@ -236,18 +225,19 @@ public final class JDBCConnection {
 	 * @param clazz             that represents the table
 	 * @param sqlWhereCondition the condidion
 	 * @return an array list
-	 * @throws SQLException
 	 * @throws Exception
 	 */
 	 
-	public <E> List<E> select(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION, final boolean SHOW_SQL)
+	protected <E> List<E> select(final Class<E> CLAZZ, final SQLWhereCondition WHERE_CONDITION)
 			throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
+		final String SCRIPT = SQLScripts.<E>createSQLSelectScript(CLAZZ, WHERE_CONDITION);
+		
+		openConnection();
 		
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 		SQLUtils.createPreparedStatementWhereCondition(WHERE_CONDITION, statement, 1);
 		
-		if (SHOW_SQL)SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL)showScript(SCRIPT);
 
 		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
 
@@ -256,14 +246,9 @@ public final class JDBCConnection {
 
 		while (RESULT_SET.next()) {
 			try {
-				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (SQLScriptException e) {
-				SQL_LOGGER.showException(e.getScript());
-				throw e;
+				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ));
 			} catch (SQLException e) {
-				throw new SQLException(e);
-			} catch (Exception e) {
-				SQL_LOGGER.showException(e.getMessage());
+				showException(SCRIPT, e);
 				throw new SQLException(e);
 			}
 		}
@@ -273,11 +258,12 @@ public final class JDBCConnection {
 	}
 
 	 
-	public <E> List<E> select(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS,
-			final boolean SHOW_SQL) throws SQLException {
+	protected <E> List<E> select(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE_CONDITIONS) throws SQLException {
 
-		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
-		if (SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		openConnection();
+		
+		final String SCRIPT = SQLScripts.<E>createSQLSelectScript(CLAZZ, WHERE_CONDITIONS);
+		if (SHOW_SQL) showScript(SCRIPT);
 
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 		SQLUtils.createPreparedStatementWhereCondition(WHERE_CONDITIONS, statement, 1);
@@ -289,9 +275,8 @@ public final class JDBCConnection {
 
 		while (RESULT_SET.next()) {
 			try {
-				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ, SHOW_SQL));
-			} catch (Exception e) {
-				e.printStackTrace();
+				objects.add(createObjectFromLine(RESULT_SET, FIELDS, CLAZZ));
+			} catch (SQLException e) {
 				throw new SQLException(e);
 			}
 		}
@@ -305,12 +290,14 @@ public final class JDBCConnection {
 	 * his relationships
 	 */
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> insert(final E OBJECT, final boolean SHOW_SQL) throws Exception {
+	protected <E> Optional<E> insert(final E OBJECT) throws Exception {
 
+		openConnection();
+		
 		final Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 
 		// return a String that contains the SQL and a List that contains the values
-		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLInsertScript(OBJECT);
+		final SQLJavaStatement javaStatement = SQLScripts.<E>createSQLInsertScript(OBJECT);
 
 		// get the Script that was generated
 		final String SCRIPT = javaStatement.getSql();
@@ -320,18 +307,17 @@ public final class JDBCConnection {
 		// changes the ? to the real values
 		SQLUtils.createPreparedStatementObject(javaStatement.getValues(), statement);
 
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL) showScript(SCRIPT);
 
 		executeSQL(statement);
 
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 
-		final String MAX_ID = SQL_SCRIPTS.createSQLMaxSelectScript(CLAZZ);
-		final ResultSet RESULT_SET = this.executeSQLSelect(MAX_ID);
+		final String MAX_ID = SQLScripts.createSQLMaxSelectScript(CLAZZ);
+		final ResultSet RESULT_SET = executeSQLSelect(MAX_ID);
 
 		if (SHOW_SQL) {
-			SQL_LOGGER.showScript(MAX_ID);
+			showScript(MAX_ID);
 		}
 
 		Long maxID = null;
@@ -343,24 +329,24 @@ public final class JDBCConnection {
 		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, maxID, SQLBasicConditionType.EQUAL);
 
 		// return the register and convert to object
-		return this.<E>findOne(CLAZZ, WHERE, SHOW_SQL);
+		return this.<E>findOne(CLAZZ, WHERE);
 	}
 
 	 
-	public <E> void createSQLTable(final Class<E> CLAZZ, final boolean SHOW_SQL) throws SQLException {
+	protected <E> void createSQLTable(final Class<E> CLAZZ) throws SQLException {
 		if (CLAZZ.isAnnotationPresent(SQLTable.class)) {
-			final String CREATE_TABLE = SQL_SCRIPTS.createSQLTableScript(CLAZZ, system);
+			final String CREATE_TABLE = SQLScripts.createSQLTableScript(CLAZZ, sqlConnection.getSystem());
 			String dropTable = null;
 
 			// if the Class has to drop the table
 			if (CLAZZ.getAnnotation(SQLTable.class).dropTableIfExists()) {
-				dropTable = SQL_SCRIPTS.createSQLDropTableScript(CLAZZ);
+				dropTable = SQLScripts.createSQLDropTableScript(CLAZZ);
 				if (SHOW_SQL) {
-					SQL_LOGGER.showDropTableScript(dropTable);
+					SQLLogger.showDropTableScript(dropTable);
 				}
 			}
 			if (SHOW_SQL) {
-				SQL_LOGGER.showCreateTableScript(CREATE_TABLE);
+				SQLLogger.showCreateTableScript(CREATE_TABLE);
 			}
 			if (dropTable != null) {
 				// if the table exists, it will be dropped
@@ -383,35 +369,37 @@ public final class JDBCConnection {
 	 * @throws SQLException
 	 */
 	 
-	public <E> void delete(final Class<E> CLAZZ, final SQLWhereCondition WHERE, final boolean SHOW_SQL)
+	protected <E> void delete(final Class<E> CLAZZ, final SQLWhereCondition WHERE)
 			throws SQLException {
 		
-		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
+		openConnection();
+		
+		final String SCRIPT = SQLScripts.<E>createSQLDeleteScript(CLAZZ, WHERE);
 		
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
 		
-		if (SHOW_SQL) 	SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL) showScript(SCRIPT);
 		executeSQL(statement);
 	}
 	
 	
-	public <E> void delete(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws SQLException {
+	protected <E> void delete(final Class<E> CLAZZ, final Object IDENTIFIER_VALUE) throws SQLException {
 		
 		// we get the primary key name
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(CLAZZ);
 		SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
-		this.<E>delete(CLAZZ, WHERE, SHOW_SQL);
+		this.<E>delete(CLAZZ, WHERE);
 		
 	}
 
 	 
-	public <E> void delete(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
-			throws SQLException {
-		final String SCRIPT = SQL_SCRIPTS.createSQLDeleteScript(CLAZZ, WHERE);
+	protected <E> void delete(final Class<E> CLAZZ, final List<SQLWhereCondition> WHERE) throws SQLException {
+		openConnection();
+		final String SCRIPT = SQLScripts.<E>createSQLDeleteScript(CLAZZ, WHERE);
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 		SQLUtils.createPreparedStatementWhereCondition(WHERE, statement, 1);
-		if (SHOW_SQL) SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL) showScript(SCRIPT);
 		executeSQL(statement);
 	}
 
@@ -419,12 +407,13 @@ public final class JDBCConnection {
 	 * Merge object to database, usually at update statements
 	 */
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> update(E OBJECT, SQLWhereCondition WHERE, boolean SHOW_SQL) throws Exception {
+	protected <E> Optional<E> update(E OBJECT, SQLWhereCondition WHERE) throws Exception {
 
-		final SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		openConnection();
+		
+		final SQLJavaStatement javaStatement = SQLScripts.<E>createSQLUpdateScript(OBJECT, WHERE);
 		final String SCRIPT = javaStatement.getSql();
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL) showScript(SCRIPT);
 
 		PreparedStatement statement = connection.prepareStatement(SCRIPT);
 
@@ -453,7 +442,7 @@ public final class JDBCConnection {
 				SQLBasicConditionType.EQUAL);
 
 		// return the object with all its relationships
-		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
+		return this.<E>findOne(CLAZZ, WHERE_CONDITION);
 	}
 	
 	/**
@@ -464,23 +453,23 @@ public final class JDBCConnection {
 	 * @return
 	 * @throws Exception
 	 */
-	public <E> Optional<E> update(final E OBJECT, final Object IDENTIFIER_VALUE, final boolean SHOW_SQL) throws Exception{
+	protected <E> Optional<E> update(final E OBJECT, final Object IDENTIFIER_VALUE) throws Exception{
 		
 		// get the name of the primary kery
 		final String PK_NAME = SQLUtils.getPrimaryKeyName(OBJECT.getClass());
 		final SQLWhereCondition WHERE = new SQLBasicWhereCondition(PK_NAME, IDENTIFIER_VALUE, SQLBasicConditionType.EQUAL);
-		return this.<E>update(OBJECT, WHERE, SHOW_SQL);
+		return this.<E>update(OBJECT, WHERE);
 	}
 	
 
 	@SuppressWarnings("unchecked")
-	public <E> Optional<E> update(final E OBJECT, final List<SQLWhereCondition> WHERE, final boolean SHOW_SQL)
+	protected <E> Optional<E> update(final E OBJECT, final List<SQLWhereCondition> WHERE)
 			throws Exception {
 
-		SQLJavaStatement javaStatement = SQL_SCRIPTS.createSQLUpdateScript(OBJECT, WHERE);
+		openConnection();
+		SQLJavaStatement javaStatement = SQLScripts.<E>createSQLUpdateScript(OBJECT, WHERE);
 		final String SCRIPT = javaStatement.getSql();
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
+		if (SHOW_SQL)showScript(SCRIPT);
 		// makes a downcast to generic class
 		Class<E> CLAZZ = (Class<E>) OBJECT.getClass();
 
@@ -511,15 +500,15 @@ public final class JDBCConnection {
 				SQLBasicConditionType.EQUAL);
 
 		// return the object with all its relationships
-		return this.<E>findOne(CLAZZ, WHERE_CONDITION, SHOW_SQL);
+		return this.<E>findOne(CLAZZ, WHERE_CONDITION);
 	}
 
-	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ,
-			final boolean SHOW_SQL) throws SQLException, Exception {
-
+	private <E> E createObjectFromLine(final ResultSet RESULT_SET, final List<Field> FIELDS, final Class<E> CLAZZ) throws SQLException {
+  
+		try {
 		// Create an object, and we set it the primary key value to the object, we get
 		// the first field that is the one who represents primary key
-		E object = setPrimaryKeyValue(ObjectAccessUtils.<E>initObject(CLAZZ), CLAZZ, RESULT_SET, FIELDS.get(0));
+		E object = JDBCUtils.setPrimaryKeyValue(ObjectAccessUtils.<E>initObject(CLAZZ), CLAZZ, RESULT_SET, FIELDS.get(0));
 
 		final byte FIELDS_SIZE = (byte) FIELDS.size();
 
@@ -534,10 +523,10 @@ public final class JDBCConnection {
 			if (SQLUtils.isFieldRelationship(ACTUAL_FIELD)) {
 				// if the field is a foreign key, so we have to create an object
 
-				if (ACTUAL_FIELD.getAnnotation(SQLForeignKey.class).lazyLoad())
+				// if the field is a lazy load, we will not load it
+				if (ACTUAL_FIELD.getAnnotation(SQLForeignKey.class).fetch().isLazy())
 					continue;
-				// if lazy load was seated to false, we do not need to load the
-				// relationship
+			
 
 				// the column of the actual table
 				final String COLUMN_RELATIONSHIP = SQLUtils.getColumnNameFromField(ACTUAL_FIELD);
@@ -553,7 +542,7 @@ public final class JDBCConnection {
 				final SQLWhereCondition WHERE_CONDITION = new SQLBasicWhereCondition(COLUMN_FOREIGN, COLUMN_VALUE,
 						SQLBasicConditionType.EQUAL);
 
-				final Object VALUE = this.getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, CLAZZ, SHOW_SQL);
+				final Object VALUE = getSQLColumnValue(ACTUAL_FIELD.getType(), WHERE_CONDITION, CLAZZ);
 
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, VALUE);
 
@@ -568,17 +557,20 @@ public final class JDBCConnection {
 				ObjectAccessUtils.<E>callSetter(object, FIELD_NAME, COLUMN_VALUE);
 
 			}
+			
 		}
 		return object;
+		}catch(Exception e) {
+			e.printStackTrace();
+			throw new SQLException(e);
+		}
 	}
 
-	private Object getSQLColumnValue(final Class<?> CLAZZ, final SQLWhereCondition WHERE_CONDITION,
-			Class<?> DECLARED_CLASS, final boolean SHOW_SQL) throws Exception {
+	private Object getSQLColumnValue(final Class<?> CLAZZ, final SQLWhereCondition WHERE_CONDITION,	Class<?> DECLARED_CLASS) throws Exception {
 
 		// creates the select script
-		final String SCRIPT = SQL_SCRIPTS.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
-		if (SHOW_SQL)
-			SQL_LOGGER.showScript(SCRIPT);
+		final String SCRIPT = SQLScripts.createSQLSelectScript(CLAZZ, WHERE_CONDITION);
+		if (SHOW_SQL) showScript(SCRIPT);
 
 		// gets all the fields
 		final List<Field> FIELDS = SQLUtils.allFieldsToTable(CLAZZ);
@@ -586,32 +578,33 @@ public final class JDBCConnection {
 		ResultSet resultSet = null;
 
 		try {
+
 			// creates the result
 			resultSet = executeSQLSelect(SCRIPT);
 			// get the first and unique row
 			resultSet.next();
 
+			// initialize the object
+			Object object = ObjectAccessUtils.initObject(CLAZZ);
+
+			// iterate over the fields
+			for (final Field FIELD : FIELDS) {
+				setValueToObject(object, FIELD.getType(), FIELD, resultSet, CLAZZ);
+			}
+			return object;
 		} catch (SQLException e) {
-			// if the script was incorrect formed
-			throw new SQLScriptException(e.getMessage(), SCRIPT);
+			throw e;
 		}
 
-		// initialize the object
-		Object object = ObjectAccessUtils.initObject(CLAZZ);
-
-		// iterate over the fields
-		for (final Field FIELD : FIELDS) {
-			this.setValueToObject(object, FIELD.getType(), FIELD, resultSet, CLAZZ, SHOW_SQL);
-		}
-
-		return object;
+		
 	}
 
 	private void setValueToObject(Object object, final Class<?> CLAZZ, final Field FIELD, final ResultSet RESULT_SET,
-			final Class<?> DECLARED_CLASS, final boolean SHOW_SQL) throws Exception {
+			final Class<?> DECLARED_CLASS) throws Exception {
 		final String FIELD_NAME = FIELD.getName();
 
 		if (SQLUtils.isFieldRelationship(FIELD)) {
+
 			// get the name of table of the field
 			final String COLUMN_NAME = SQLUtils.getColumnNameFromField(FIELD);
 
@@ -631,7 +624,7 @@ public final class JDBCConnection {
 			final Class<?> DECLARING_CLASS = FIELD.getDeclaringClass();
 
 			// calls it recursively,
-			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, DECLARING_CLASS, SHOW_SQL);
+			Object value = getSQLColumnValue(RELATIONSHIP, WHERE, DECLARING_CLASS);
 
 			ObjectAccessUtils.callSetter(object, FIELD_NAME, value);
 
@@ -656,36 +649,6 @@ public final class JDBCConnection {
 
 		}
 
-	}
-
-	/**
-	 * Set the primary key value
-	 * 
-	 * @param object
-	 * @param CLAZZ
-	 * @param RESULT_SET
-	 * @param PRIMARY_KEY
-	 * @throws SQLException
-	 * @throws IllegalAccessException
-	 * @throws IllegalArgumentException
-	 * @throws InvocationTargetException
-	 * @throws IntrospectionException
-	 */
-	private <E> E setPrimaryKeyValue(E object, final Class<?> CLAZZ, final ResultSet RESULT_SET,
-			final Field PRIMARY_KEY) throws SQLException, Exception {
-		Object value = null;
-		/**
-		 * If the class has the annotation that set the name of the Primary Keys
-		 */
-		if (CLAZZ.isAnnotationPresent(SQLInheritancePK.class)) {
-			value = SQLUtils.getSQLValue(CLAZZ.getAnnotation(SQLInheritancePK.class).primaryKeyName(), RESULT_SET,
-					PRIMARY_KEY.getType());
-		} else {
-			value = SQLUtils.getSQLValue(SQLUtils.getColumnNameFromField(PRIMARY_KEY), RESULT_SET,
-					PRIMARY_KEY.getType());
-		}
-		ObjectAccessUtils.<E>callSetter(object, PRIMARY_KEY.getName(), value);
-		return object;
 	}
 	
 	private void close(PreparedStatement statement, ResultSet resultSet) throws SQLException {

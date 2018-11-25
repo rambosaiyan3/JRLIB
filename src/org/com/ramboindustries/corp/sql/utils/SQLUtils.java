@@ -11,7 +11,6 @@ import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 
-import org.com.ramboindustries.corp.sql.SQLJavaField;
 import org.com.ramboindustries.corp.sql.abstracts.SQLBasicWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLComplexWhereCondition;
 import org.com.ramboindustries.corp.sql.abstracts.SQLUniqueWhereCondition;
@@ -20,8 +19,9 @@ import org.com.ramboindustries.corp.sql.annotations.SQLColumn;
 import org.com.ramboindustries.corp.sql.annotations.SQLForeignKey;
 import org.com.ramboindustries.corp.sql.annotations.SQLIdentifier;
 import org.com.ramboindustries.corp.sql.annotations.SQLInheritancePK;
-import org.com.ramboindustries.corp.sql.commands.SQLDataDefinitionCons;
-import org.com.ramboindustries.corp.sql.commands.SQLDataManipulationCons;
+import org.com.ramboindustries.corp.sql.classsql.SQLJavaField;
+import org.com.ramboindustries.corp.sql.constants.SQL_DDL;
+import org.com.ramboindustries.corp.sql.constants.SQL_DML;
 import org.com.ramboindustries.corp.sql.exceptions.SQLIdentifierException;
 import org.com.ramboindustries.corp.sql.types.TypeClass;
 
@@ -58,13 +58,13 @@ public final class SQLUtils {
 	}
 
 	protected static String createWhereCondition(final SQLWhereCondition WHERE_CONDITION) {
-		return SQLDataManipulationCons.WHERE + createCondition(WHERE_CONDITION) + ";";
+		return SQL_DML.WHERE + createCondition(WHERE_CONDITION) + ";";
 	}
 	
 	
 	
 	protected static String createWhereCondition(final List<SQLWhereCondition> WHERE_CONDITION) {
-		StringBuilder builder = new StringBuilder(" " + SQLDataManipulationCons.WHERE_TRUE);
+		StringBuilder builder = new StringBuilder(" " + SQL_DML.WHERE_TRUE);
 		WHERE_CONDITION.forEach(WHERE -> {
 			builder.append( " AND ");
 			builder.append(createCondition(WHERE));
@@ -98,7 +98,7 @@ public final class SQLUtils {
 			name = clazz.getAnnotation(SQLInheritancePK.class).primaryKeyName();
 		else
 			name = field.getAnnotation(SQLIdentifier.class).identifierName();
-		return SQLDataDefinitionCons.CONSTRAINT + " " + CONSTRAINT + " " + SQLDataDefinitionCons.PRIMARY_KEY + "(" + name + ")";
+		return SQL_DDL.CONSTRAINT + " " + CONSTRAINT + " " + SQL_DDL.PRIMARY_KEY + "(" + name + ")";
 	}
 
 	/**
@@ -119,8 +119,8 @@ public final class SQLUtils {
 			fieldReferenced = SQLClassHelper.getPrimaryKey(field.getType()).getAnnotation(SQLIdentifier.class)
 					.identifierName();
 		}
-		return SQLDataDefinitionCons.CONSTRAINT + CONSTRAINT + SQLDataDefinitionCons.FOREIGN_KEY + "("
-				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQLDataDefinitionCons.REFERENCES
+		return SQL_DDL.CONSTRAINT + CONSTRAINT + SQL_DDL.FOREIGN_KEY + "("
+				+ field.getAnnotation(SQLForeignKey.class).name() + ")" + SQL_DDL.REFERENCES
 				+ getTableName(field.getType()) + "(" + fieldReferenced + ")";
 	}
 

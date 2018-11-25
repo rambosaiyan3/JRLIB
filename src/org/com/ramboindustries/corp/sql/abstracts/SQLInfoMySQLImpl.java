@@ -2,22 +2,22 @@ package org.com.ramboindustries.corp.sql.abstracts;
 
 import org.com.ramboindustries.corp.sql.enums.SQLSystem;
 
-public class SQLMySQLConnection extends SQLConnection  {
+public class SQLInfoMySQLImpl extends SQLInfo  {
 
 	private final static int PORT = 3306;
 	private final static String URL = "jdbc:mysql://";
 	private final static String DRIVER = "com.mysql.jdbc.Driver";
 	
-	public SQLMySQLConnection(final String SERVER, final String DATABASE, final String USER, final String PASSWORD) {
+	public SQLInfoMySQLImpl(final String SERVER, final String DATABASE, final String USER, final String PASSWORD) {
 		this(DRIVER, createURL(SERVER, DATABASE, PORT), USER, PASSWORD, SQLSystem.MY_SQL);
 	}
 	
-	public SQLMySQLConnection(final String SERVER, final String DATABASE, final String USER, final String PASSWORD, final int PORT) {
+	public SQLInfoMySQLImpl(final String SERVER, final String DATABASE, final String USER, final String PASSWORD, final int PORT) {
 		this(DRIVER, createURL(SERVER, DATABASE, PORT), USER, PASSWORD, SQLSystem.MY_SQL);
 	}
 	
 	
-	private SQLMySQLConnection(String driver, String url, String user, String password, SQLSystem system) {
+	private SQLInfoMySQLImpl(String driver, String url, String user, String password, SQLSystem system) {
 		super(driver, url, user, password, system);
 	}
 

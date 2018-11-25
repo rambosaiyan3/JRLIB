@@ -1,6 +1,6 @@
-package org.com.ramboindustries.corp.sql.commands;
+package org.com.ramboindustries.corp.sql.constants;
 
-public final class SQLDataManipulationCons {
+public final class SQL_DML {
 
 	public final static String INSERT = " INSERT INTO ";
 	public final static String SELECT = " SELECT ";
@@ -16,7 +16,7 @@ public final class SQLDataManipulationCons {
 	public final static String SELECT_MAX = " SELECT MAX";
 	public final static String DELETE_FROM = " DELETE FROM ";
 	
-	private SQLDataManipulationCons() {
+	private SQL_DML() {
 		
 	}
 	
