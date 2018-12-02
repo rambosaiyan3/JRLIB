@@ -16,7 +16,7 @@ Example of use:
 public class User extends BaseEntity{
 
 #   in mysql 
- #  NAME VARCHAR(600) NOT NULL
+ #  NAME VARCHAR(60) NOT NULL
 	@SQLColumn(name = "NAME", required = true, length = 60)
 	private String name;
 	
@@ -27,7 +27,7 @@ public class User extends BaseEntity{
 	private String password;
   
   # the use of @SQLColumn is optional, 
-  # if we do not use, we get default size of the field
+  # if we do not use, we get default size of the field, and the same name of the attribute
   # SALARY DECIMAL(5,2) 
   private BigDecimal salary;
   
